@@ -60,9 +60,9 @@ right_encoder = Encoder(timRight, ch1Right, ch2Right)
 mot_left = motor_driver(Pin.cpu.B9, Pin.cpu.C9, Pin.cpu.C8, Timer(17, freq=60000), 1)
 mot_right = motor_driver(Pin.cpu.A6, Pin.cpu.A1, Pin.cpu.A0, Timer(16, freq=60000), 1)
 
-cl_ctrl_mot_left = CLMotorController(15, 0, 0, Kp=0.1, Ki=0.1, min_sat=-100, max_sat=100, t_init=0, gain=0.01,
+cl_ctrl_mot_left = CLMotorController(15, 0, 0, Kp=0.1, Ki=0, min_sat=-100, max_sat=100, t_init=0, gain=0.01,
                  v_nom=5.0, threshold=4.0)
-cl_ctrl_mot_right = CLMotorController(15, 0, 0, Kp=0.1, Ki=0.1, min_sat=-100, max_sat=100, t_init=0, gain=0.01,
+cl_ctrl_mot_right = CLMotorController(15, 0, 0, Kp=0.1, Ki=0, min_sat=-100, max_sat=100, t_init=0, gain=0.01,
                  v_nom=5.0, threshold=4.0)
 
 
@@ -74,9 +74,8 @@ AUTOMATICALLY UPDATES THE DIRECTION SHARE, ONLY SET EFFORT AND ENABLE SHARES:
 L_eff_share, L_en_share, R_eff_share, R_en_share
 
 """
-
 def left_ops(shares):
-    # print("LEFT OPS")
+    print("LEFT OPS")
     state = 0
     # params: L dir, L eff, L en, L pos, L vel, L time
     L_dir, L_eff, L_en, L_pos, L_vel, L_time = shares
@@ -111,7 +110,12 @@ def left_ops(shares):
                     L_dir.put(0)
                 cl_ctrl_mot_left.set_target(L_eff.get())
                 L_prev_eff = L_eff.get() # store and update the effort
-            mot_left.set_effort(cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity()))
+            # print("LINE 113")
+            t_print = cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity())
+            # print(f"ticks: {L_t_new}, vel: {left_encoder.get_velocity()}, eff: {t_print}")
+            # print("Line 115")
+            # print(t_print)
+            mot_left.set_effort(t_print)
             L_pos.put(left_encoder.get_position())
             L_vel.put(left_encoder.get_velocity())
             L_time.put(ticks_diff(L_t_new, L_t_start))
@@ -465,6 +469,8 @@ if __name__ == "__main__":
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started
     gc.collect()
+
+    print("PROG START")
 
     # Run the scheduler with the chosen scheduling algorithm. Quit if ^C pressed
     while True:
