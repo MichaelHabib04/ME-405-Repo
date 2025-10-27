@@ -9,6 +9,7 @@ from Encoder import Encoder
 from motor_driver import motor_driver
 from time import sleep_ms
 from pyb import USB_VCP
+from controller import CLMotorController, Controller
 
 from machine import UART
 
@@ -59,6 +60,12 @@ right_encoder = Encoder(timRight, ch1Right, ch2Right)
 mot_left = motor_driver(Pin.cpu.B9, Pin.cpu.C9, Pin.cpu.C8, Timer(17, freq=60000), 1)
 mot_right = motor_driver(Pin.cpu.A6, Pin.cpu.A1, Pin.cpu.A0, Timer(16, freq=60000), 1)
 
+cl_ctrl_mot_left = CLMotorController(15, 0, 0, Kp=0.1, Ki=0.1, min_sat=-100, max_sat=100, t_init=0, gain=0.01,
+                 v_nom=5.0, threshold=4.0)
+cl_ctrl_mot_right = CLMotorController(15, 0, 0, Kp=0.1, Ki=0.1, min_sat=-100, max_sat=100, t_init=0, gain=0.01,
+                 v_nom=5.0, threshold=4.0)
+
+
 
 
 """
@@ -102,8 +109,9 @@ def left_ops(shares):
                     L_dir.put(1)
                 else:
                     L_dir.put(0)
-                L_prev_eff = L_eff.get()            # store and update the effort
-                mot_left.set_effort(L_eff.get())
+                cl_ctrl_mot_left.set_target(L_eff.get())
+                L_prev_eff = L_eff.get() # store and update the effort
+            mot_left.set_effort(cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity()))
             L_pos.put(left_encoder.get_position())
             L_vel.put(left_encoder.get_velocity())
             L_time.put(ticks_diff(L_t_new, L_t_start))
@@ -140,13 +148,14 @@ def right_ops(shares):
                     mot_right.disable()
                     R_prev_en = R_en.get()
             if R_eff.get() != R_prev_eff:
-                R_prev_dir = R_dir.get()
+                R_prev_dir = R_dir.get()  # update the direction to match the effort input
                 if R_eff.get() > 0:
                     R_dir.put(1)
                 else:
                     R_dir.put(0)
-                R_prev_eff = R_eff.get()
-                mot_right.set_effort(R_eff.get())
+                cl_ctrl_mot_right.set_target(R_eff.get())
+                R_prev_eff = R_eff.get()  # store and update the effort
+            mot_right.set_effort(cl_ctrl_mot_right.get_action(R_t_new, right_encoder.get_velocity()))
             R_pos.put(right_encoder.get_position())
             R_vel.put(right_encoder.get_velocity())
             R_time.put(ticks_diff(R_t_new, R_t_start))
