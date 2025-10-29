@@ -38,6 +38,12 @@ def save_csv(filename, data_lines):
         for row in rows:
             writer.writerow([x.strip() for x in row])
     print(f"Saved {len(rows)} rows to {filename}")
+    
+def drive_forward(eff):
+    num =  eff // 10
+    
+    
+    
 
 
 with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
@@ -69,13 +75,13 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     b = print current task state (for debugging, can remove)
     z = print left queues
     x = print right queues""")
-    print("Issue a command! \n")
+    print("\nIssue a command! \n")
     valid_inputs = "relkcnpsbzx"
     while True:
         key = input()
         if key in valid_inputs and len(key) == 1:
             ser.write(key.encode())
-            print("valid command")
+            print(f"{key}")
         else:
             print("invalid command")
 

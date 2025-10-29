@@ -17,14 +17,14 @@ ser = USB_VCP()
 
 # Setup Pins for bluetooth module
 # Deconfigure default pins
-Pin(Pin.cpu.A2,  mode=Pin.ANALOG)     # Set pin modes back to default
-Pin(Pin.cpu.A3,  mode=Pin.ANALOG)
+# Pin(Pin.cpu.A2,  mode=Pin.ANALOG)     # Set pin modes back to default
+# Pin(Pin.cpu.A3,  mode=Pin.ANALOG)
 
 # Configure the selected pins in coordination with the alternate function table
 Pin(Pin.cpu.B6,  mode=Pin.ALT, alt=7) # Set pin modes to UART matching column 7 in alt. fcn. table
 Pin(Pin.cpu.B7, mode=Pin.ALT, alt=7)
 
-uart = UART(1, 115200)  # init with given baudrate
+uart = UART(2, 115200)  # init with given baudrate
 uart.init(115200, bits=8, parity=None, stop=1)  # init with given parameters
 uart.write("test".encode())
 
@@ -289,10 +289,19 @@ def run_UI(shares):
             # print("Now:", ticks_ms(), "diff:", ticks_diff(ticks_ms(), test_start_time))
             if ticks_diff(ticks_ms(), test_start_time) >= 2500: # stops test after ~ 2.5 seconds
                 # print("state 3 exit")
+                r_eff = 0
+                l_eff = 0
+                R_eff.put(r_eff)
+                L_eff.put(l_eff)
+                
                 r_en = 0
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
+                # r_eff = 0
+                # l_eff = 0
+                # R_eff.put(r_eff)
+                # L_eff.put(l_eff)
                 state = 1
                 Run.put(0) # indicates stop to data collection
                 uart.write("STOP STEP RESPONSE______________")
