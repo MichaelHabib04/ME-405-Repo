@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Oct 29 13:41:10 2025
+
+@author: katherinemeezan
+"""
+
 from serial import Serial
 from time import sleep
 import pandas as pd
@@ -209,105 +217,3 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     # print("Sending command to start data collection")
     setRMotEff(13)
     setLMotEff(25)
-    
-    
-  
-    
-    
-
-    # print("Flushing serial port")
-    # while ser.in_waiting:
-    #     ser.read()
-
-    # ser.write(b"s\r\n")
-    # sleep(5)
-    # ser.write(b"z\r\n")
-    # sleep(1)
-    
-    
-    
-    
-    # ser.write(b"c\r\n")
-    # straightLineTest(10)
-    # ser.write(b"z\r\n")
-    # sleep(3)
-
-
-    # print("Sending command to start data collection")
-
- 
-    # print("Flushing serial port")
-    # while ser.in_waiting:
-    #     ser.read()
-    # straightLineTest(20)
-    
-    # sleep(5)
-    # ser.write(b"z\r\n")
-    # sleep(1)
-
-
-    while not ser.in_waiting: continue
-
-    # while True:
-    #         line = ser.readline().decode(errors="replace").strip()
-    #         if not line:
-    #             continue
-    #         if "MOTOR:" in line or "Number of data points:" in line
-
-    right_motor_data = []
-    left_motor_data = []
-
-    read_right = False
-    read_left = False
-    while True:
-        line = ser.readline().decode(errors="replace").strip()
-        # if not line:
-        #     continue
-        if line.startswith("RIGHT MOTOR"):
-            print("Reading right motor data...")
-            read_right = True
-            continue
-        if read_right:
-            if line.startswith("LEFT"):
-                print("Reading left motor data...")
-                read_right = False
-                read_left = True
-            else:
-                right_motor_data.append(line)
-        elif read_left:
-            if line:
-                left_motor_data.append(line)
-            else:
-                print("Data collection complete")
-                read_left = True
-                break
-
-
-with open("right_motor.csv", 'w') as file:
-    file.seek(0)
-    file.truncate()
-    save_csv("right_motor.csv", right_motor_data)
-with open("left_motor.csv", 'w') as file:
-    file.seek(0)
-    file.truncate()
-    save_csv("left_motor.csv", left_motor_data)
-    
-
-data_right = pd.read_csv("right_motor.csv", header=None, names=["time", "velocity"])
-data_left = pd.read_csv("left_motor.csv", header=None, names=["time", "velocity"])
-
-plt.figure()
-plt.plot(data_left["time"], data_left["velocity"])
-
-plt.title("Left Velocity vs Time")
-plt.xlabel("Time (s)")
-plt.ylabel("Velocity (units/s)")
-
-# Plot
-plt.figure()
-plt.plot(data_right["time"], data_right["velocity"])
-plt.title("Right Velocity vs Time")
-plt.xlabel("Time (s)")
-plt.ylabel("Velocity (units/s)")
-
-plt.show()

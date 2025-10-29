@@ -182,8 +182,18 @@ UI Task guide:
     p = print current motor efforts
     s = run step response test
     b = print current task state (for debugging, can remove)
-    z = print left queues
-    x = print right queues
+    z = print output of test data
+   
+    v = reset right and left motor efforts to 0
+    d = zero right motor effort
+    h = zero left motor effort
+    q = inc right motor effort by 1
+    w = inc left motor effort by 1
+    t = dec right motor effort by 1
+    x = dec left motor effort by 1
+    
+    u = multiply current right motor effort by 10
+    m = multiply current left motor effort by 10
 
 Motor step response test:
     Turns both motors off
@@ -255,6 +265,37 @@ def run_UI(shares):
             elif char_in =="b":
                 print(state)
                 state = 1
+            elif char_in =="v": # reset right and left motor efforts to zero
+                r_eff = 0
+                l_eff = 0
+                R_eff.Put(r_eff)
+                L_eff.Put(l_eff)
+            elif char_in =="q":
+                r_eff +=1
+                R_eff.Put(r_eff)
+            elif char_in =="w":
+                l_eff +=1
+                L_eff.Put(l_eff)
+            elif char_in =="t":
+                r_eff -=1
+                R_eff.Put(r_eff)
+            elif char_in =="x":
+                l_eff -=1
+                L_eff.Put(l_eff)
+            elif char_in =="u":
+                r_eff = r_eff*10
+                R_eff.Put(r_eff)
+            elif char_in =="m":
+                l_eff = l_eff*10
+                L_eff.Put(l_eff)
+            elif char_in =="d":
+                r_eff = 0
+                R_eff.Put(r_eff)
+            elif char_in =="h":
+                l_eff = 0
+                L_eff.Put(l_eff)
+            
+            
             elif char_in == "z":
                 # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
                 if Print_out.get() != 1:
