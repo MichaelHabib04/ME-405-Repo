@@ -22,7 +22,7 @@ Created on Thu Oct 23 09:23:36 2025
 from time import ticks_diff
 class CLMotorController():
     def __init__(self, target, old_ticks, old_state, Kp=1, Ki=1, min_sat=-100, max_sat=100, t_init=0,
-                 v_nom=5.0, threshold=4.0):
+                 v_nom=5.0, threshold=4.0, K3=0.61):
         # super().__init__(target, old_ticks, old_state, Kp, Ki, min_sat, max_sat, t_init)
         self.target = target
         self.old_ticks = old_ticks
@@ -39,9 +39,9 @@ class CLMotorController():
         self.v_bat = self.v_nom
         self.bat_gain = self.v_bat/self.v_nom
         self.threshold = threshold # threshold for battery signal
-        self.K1 = 16.37 # (encoder counts/sec)/ %pwm # PLACEHOLDER VALUE
+        self.K1 = 1.637 # (wheel degrees/sec)/ mm/s
         self.K2 = 0.25 # wheel degrees per encoder count
-        self.K3 = 1/self.K1 # effort=%pwm / (encoder counts/sec)
+        self.K3 = K3 # effort=%pwm / (wheel degrees/sec)
     def set_Kp(self, Kp):
         self.Kp = Kp
 
@@ -61,7 +61,7 @@ class CLMotorController():
     def get_action(self, new_ticks, new_state):
         # new_state is a velocity in counts/sec
         # new_ticks is a count in microseconds
-        # To calculate error, first convert set point in effort to counts/sec
+        # To calculate error, first convert set point in mm/s to wheel deg/sec
         # Scale for battery droop
         raw_error = (self.target*self.K1 - new_state*self.K2) # error in WHEEL DEGREES/SEC
         if raw_error<100000 and raw_error>-100000: # hard-coded method of ignoring faulty encoder reading spikes
@@ -77,9 +77,8 @@ class CLMotorController():
         raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error) # control output in wheel degrees per second
         ctrl_sig = raw_ctrl_sig*self.K3
         # Units: desired in deg/s, err in deg/s, acc in total deg, raw in deg/s, sig in %pwm=effort
-        print(f"desired: {self.target*self.K1}, curr: {new_state*self.K2},Err: {self.error}, Acc: {self.acc_error}, Raw: {raw_ctrl_sig}, Sig: {ctrl_sig}")
-        ctrl_sig = max(ctrl_sig, self.min_sat)
+        # print(f"desired: {self.target*self.K1}, curr: {new_state*self.K2},Err: {self.error}, Acc: {self.acc_error}, Raw: {raw_ctrl_sig}, Sig: {ctrl_sig}")
+        ctrl_sig = max(ctrl_sig, self.min_sat) # apply saturation
         ctrl_sig = min(ctrl_sig, self.max_sat)
         return ctrl_sig
-        # return self.target
 
