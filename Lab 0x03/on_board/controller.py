@@ -39,8 +39,8 @@ class CLMotorController():
         self.v_bat = self.v_nom
         self.bat_gain = self.v_bat/self.v_nom
         self.threshold = threshold # threshold for battery signal
-        self.K1 = 65.35 # (encoder counts/sec)/ %pwm # PLACEHOLDER VALUE
-        self.K2 = 30 # wheel degrees per motor count
+        self.K1 = 16.37 # (encoder counts/sec)/ %pwm # PLACEHOLDER VALUE
+        self.K2 = 0.25 # wheel degrees per encoder count
         self.K3 = 1/self.K1 # effort=%pwm / (encoder counts/sec)
     def set_Kp(self, Kp):
         self.Kp = Kp
@@ -63,23 +63,25 @@ class CLMotorController():
         # new_ticks is a count in microseconds
         # To calculate error, first convert set point in effort to counts/sec
         # Scale for battery droop
-        raw_error = (self.target*self.K1*self.bat_gain - new_state)*self.K2 # error in WHEEL DEGREES/SEC
+        raw_error = (self.target*self.K1 - new_state*self.K2) # error in WHEEL DEGREES/SEC
         if raw_error<100000 and raw_error>-100000: # hard-coded method of ignoring faulty encoder reading spikes
             self.error = raw_error
         if(self.old_ticks == 0):
             self.old_ticks = new_ticks
-            print(f"init!: self")
+            # print(f"init!: self")
         else:
             self.dt = ticks_diff(new_ticks, self.old_ticks)/1E6
             self.acc_error = self.acc_error + self.error*self.dt #Integral error, equivalent to degrees
             self.old_ticks = new_ticks
         # do control algorithm
-        ctrl_sig = self.Kp*self.error + self.Ki*self.acc_error
+        raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error) # control output in wheel degrees per second
+        ctrl_sig = raw_ctrl_sig*self.K3
         # print(f"ctrlr l75, target: {self.target}, error: {self.error}, acc: {self.acc_error}, total: {ctrl_sig}")
         # total *= self.K3 # change action into an effort (%pwm) value
-        print(f"desired: {self.target*self.K1*self.bat_gain}, Err: {self.error}, Acc: {self.acc_error}, Sig: {ctrl_sig}")
+        # Units: desired in deg/s, err in deg/s, acc in total deg, raw in deg/s, sig in %pwm=effort
+        # print(f"desired: {self.target*self.K1}, Err: {self.error}, Acc: {self.acc_error}, Raw, {raw_ctrl_sig}, Sig: {ctrl_sig}")
         ctrl_sig = max(ctrl_sig, self.min_sat)
         ctrl_sig = min(ctrl_sig, self.max_sat)
-        return ctrl_sig
-
+        # return ctrl_sig
+        return self.target
 

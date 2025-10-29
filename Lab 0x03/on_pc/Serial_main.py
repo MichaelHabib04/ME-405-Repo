@@ -44,11 +44,11 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     sleep(0.5)
 
     print("Sending Ctrl-C to break into REPL...")
-    ser.write(b'\x03')  # Ctrl-C
+    ser.write(b"\x03")  # Ctrl-C
     sleep(0.5)
 
     print("Sending Ctrl-D to soft reboot and run main.py...")
-    ser.write(b'\x04')  # Ctrl-D
+    ser.write(b"\x04")  # Ctrl-D
     sleep(1)
 
     print("Flushing serial port")
@@ -57,27 +57,18 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
 
     print("Sending command to start data collection")
 
-    ser.write(b"n\r\n")
-    sleep(.1)
-    ser.write(b"l\r\n")
-    sleep(.1)
-    ser.write(b"c\r\n")
-    sleep(.1)
-    ser.write(b"r\r\n")
-    sleep(.1)
-    ser.write(b"r\r\n")
-    sleep(.1)
-    ser.write(b"r\r\n")
-    sleep(.1)
-    ser.write(b"s\r\n")
-    sleep(5)
-    ser.write(b"z\r\n")
-    sleep(2)
+
+    # ser.write(b"r\r\n")
+    # sleep(.5)
+    # ser.write(b"s\r\n")
+    # sleep(5)
+    # ser.write(b"z\r\n")
+    # sleep(2)
 
     print("Flushing serial port")
     while ser.in_waiting:
         ser.read()
-
+    ser.write(b"r\r\n")
     ser.write(b"s\r\n")
     sleep(5)
     ser.write(b"z\r\n")
