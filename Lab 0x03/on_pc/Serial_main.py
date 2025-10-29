@@ -137,5 +137,4 @@ plt.plot(data_right["time"], data_right["velocity"])
 plt.title("Right Velocity vs Time")
 plt.xlabel("Time (s)")
 plt.ylabel("Velocity (units/s)")
-
 plt.show()

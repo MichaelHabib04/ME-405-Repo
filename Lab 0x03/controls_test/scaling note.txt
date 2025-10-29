@@ -1,0 +1,6 @@
+SCALING NOTE:
+velocity is in encoder counts/s
+multiply by 0.1527 to get velocity in mm/s
+
+conversion:
+1 enc_count/s * 1 wheel deg/4 enc count * 70pi mm /360 wheel deg

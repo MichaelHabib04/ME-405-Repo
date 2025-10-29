@@ -42,6 +42,7 @@ class CLMotorController():
         self.K1 = 1.637 # (wheel degrees/sec)/ mm/s
         self.K2 = 0.25 # wheel degrees per encoder count
         self.K3 = K3 # effort=%pwm / (wheel degrees/sec)
+        self.KWindup = 0.1
     def set_Kp(self, Kp):
         self.Kp = Kp
 
@@ -76,9 +77,13 @@ class CLMotorController():
         # do control algorithm
         raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error) # control output in wheel degrees per second
         ctrl_sig = raw_ctrl_sig*self.K3
+        # if ctrl_sig>self.max_sat:
+        #     ctrl_sig -= self.KWindup*(ctrl_sig-self.max_sat)
+        # elif ctrl_sig>self.max_sat:
+        #     ctrl_sig -= self.KWindup*(ctrl_sig-self.max_sat)
         # Units: desired in deg/s, err in deg/s, acc in total deg, raw in deg/s, sig in %pwm=effort
-        # print(f"desired: {self.target*self.K1}, curr: {new_state*self.K2},Err: {self.error}, Acc: {self.acc_error}, Raw: {raw_ctrl_sig}, Sig: {ctrl_sig}")
-        print(f"CTRL SIG: {ctrl_sig}, bat_gain: {self.bat_gain}")
+        print(f"desired: {self.target*self.K1}, curr: {new_state*self.K2},Err: {self.error}, Acc: {self.acc_error}, Raw: {raw_ctrl_sig}, Sig: {ctrl_sig}")
+        # print(f"CTRL SIG: {ctrl_sig}, bat_gain: {self.bat_gain}")
         ctrl_sig = max(ctrl_sig, self.min_sat) # apply saturation
         ctrl_sig = min(ctrl_sig, self.max_sat)
         return ctrl_sig

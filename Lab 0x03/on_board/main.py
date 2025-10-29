@@ -65,7 +65,7 @@ BAT_READ = pyb.ADC(PC2)
 
 
 #CONTROLLER SETPOINT IS IN MM/S
-cl_ctrl_mot_left = CLMotorController(10, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
+cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
                  v_nom=2.878, threshold=1.439, K3=1.382)
 cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
                  v_nom=2.878, threshold=1.439, K3=1.4272)
