@@ -35,7 +35,7 @@ class CLMotorController():
         self.acc_error = 0
         self.dt = 0
         self.t_init = t_init
-        self.v_nom = v_nom
+        self.v_nom = v_nom # expected/ideal battery level
         self.v_bat = self.v_nom
         self.bat_gain = self.v_bat/self.v_nom
         self.threshold = threshold # threshold for battery signal
@@ -76,12 +76,10 @@ class CLMotorController():
         # do control algorithm
         raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error) # control output in wheel degrees per second
         ctrl_sig = raw_ctrl_sig*self.K3
-        # print(f"ctrlr l75, target: {self.target}, error: {self.error}, acc: {self.acc_error}, total: {ctrl_sig}")
-        # total *= self.K3 # change action into an effort (%pwm) value
         # Units: desired in deg/s, err in deg/s, acc in total deg, raw in deg/s, sig in %pwm=effort
         # print(f"desired: {self.target*self.K1}, Err: {self.error}, Acc: {self.acc_error}, Raw, {raw_ctrl_sig}, Sig: {ctrl_sig}")
         ctrl_sig = max(ctrl_sig, self.min_sat)
         ctrl_sig = min(ctrl_sig, self.max_sat)
-        # return ctrl_sig
-        return self.target
+        return ctrl_sig
+        # return self.target
 

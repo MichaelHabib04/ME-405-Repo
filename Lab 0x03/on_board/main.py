@@ -461,7 +461,7 @@ if __name__ == "__main__":
 
     # Add tasks to task list to run in scheduler
     cotask.task_list.append(task_left_ops)
-    cotask.task_list.append(task_right_ops)
+    # cotask.task_list.append(task_right_ops) # only testing with the left motor
     # cotask.task_list.append(task_dumb_ui)
     cotask.task_list.append(task_ui)
     cotask.task_list.append(task_collect_data)
