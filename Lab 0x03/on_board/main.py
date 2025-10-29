@@ -395,7 +395,18 @@ def collect_data(shares):
             state = 1
         yield state
 
-
+def ADC_reader():
+  state = 0
+  while True:
+    if state == 0: 
+      PCO = Pin(Pin.cpu.C0, mode=Pin.ANALOG)
+      ADC = pyb.ADC(PC0)
+      state = 1
+    if state == 1:
+      val = ADC.read()
+      print(val)
+    yield state
+    
 # This code creates a share, a queue, and two tasks, then starts the tasks. The
 # tasks run until somebody presses ENTER, at which time the scheduler stops and
 # printouts show diagnostic information about the tasks, share, and queue.
@@ -452,6 +463,9 @@ if __name__ == "__main__":
     task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=2, period=50,
                                 profile=False, trace=False, shares=(R_eff_share, L_eff_share, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share, run, print_out))
 
+    task_ADC_reader = cotask.Task(ADC_reader, name="ADC Reader", priority=5, period=1,
+                                  profile=False, trace=False)
+  
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
 
