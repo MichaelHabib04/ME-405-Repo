@@ -77,7 +77,7 @@ class CLMotorController():
         raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error) # control output in wheel degrees per second
         ctrl_sig = raw_ctrl_sig*self.K3
         # Units: desired in deg/s, err in deg/s, acc in total deg, raw in deg/s, sig in %pwm=effort
-        # print(f"desired: {self.target*self.K1}, Err: {self.error}, Acc: {self.acc_error}, Raw, {raw_ctrl_sig}, Sig: {ctrl_sig}")
+        print(f"desired: {self.target*self.K1}, curr: {new_state*self.K2},Err: {self.error}, Acc: {self.acc_error}, Raw: {raw_ctrl_sig}, Sig: {ctrl_sig}")
         ctrl_sig = max(ctrl_sig, self.min_sat)
         ctrl_sig = min(ctrl_sig, self.max_sat)
         return ctrl_sig
