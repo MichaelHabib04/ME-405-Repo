@@ -64,35 +64,60 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     ser.write(b"\x04")  # Ctrl-D
     sleep(1)
 
-    
-    ser.write(b"c\r\n")
-    straightLineTest(10)
-    sleep(3)
-
-
-    print("Sending command to start data collection")
-
-
-    # ser.write(b"r\r\n")
-    # sleep(.5)
-    # ser.write(b"s\r\n")
-    # sleep(5)
-    # ser.write(b"z\r\n")
-    # sleep(2)
-
-    
-    # ser.write(b"r\r\n")
-    # ser.write(b"s\r\n")
-   
-    
     print("Flushing serial port")
     while ser.in_waiting:
         ser.read()
-    straightLineTest(20)
+        
     
+    
+    print("Sending command to start data collection")
+
+    ser.write(b"n\r\n")
+    sleep(.1)
+    ser.write(b"l\r\n")
+    sleep(.1)
+    ser.write(b"c\r\n")
+    sleep(.1)
+    ser.write(b"r\r\n")
+    sleep(.1)
+    ser.write(b"r\r\n")
+    sleep(.1)
+    ser.write(b"r\r\n")
+    sleep(.1)
+    ser.write(b"s\r\n")
+    sleep(5)
+    ser.write(b"z\r\n")
+    sleep(2)
+
+    print("Flushing serial port")
+    while ser.in_waiting:
+        ser.read()
+
+    ser.write(b"s\r\n")
     sleep(5)
     ser.write(b"z\r\n")
     sleep(1)
+    
+    
+    
+    
+    # ser.write(b"c\r\n")
+    # straightLineTest(10)
+    # ser.write(b"z\r\n")
+    # sleep(3)
+
+
+    # print("Sending command to start data collection")
+
+ 
+    # print("Flushing serial port")
+    # while ser.in_waiting:
+    #     ser.read()
+    # straightLineTest(20)
+    
+    # sleep(5)
+    # ser.write(b"z\r\n")
+    # sleep(1)
 
 
     while not ser.in_waiting: continue
@@ -141,14 +166,6 @@ with open("left_motor.csv", 'w') as file:
     file.truncate()
     save_csv("left_motor.csv", left_motor_data)
     
-with open("right_motor.csv", 'w') as file:
-    file.seek(0)
-    file.truncate()
-    save_csv("right_motor.csv", right_motor_data)
-with open("left_motor.csv", 'w') as file:
-    file.seek(0)
-    file.truncate()
-    save_csv("left_motor.csv", left_motor_data)
 
 data_right = pd.read_csv("right_motor.csv", header=None, names=["time", "velocity"])
 data_left = pd.read_csv("left_motor.csv", header=None, names=["time", "velocity"])
