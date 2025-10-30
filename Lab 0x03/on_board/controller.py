@@ -40,7 +40,7 @@ class CLMotorController():
         self.bat_gain = self.v_bat/self.v_nom
         self.threshold = threshold # threshold for battery signal
         self.K1 = 1.637 # (wheel degrees/sec)/ mm/s
-        self.K2 = 0.25 # wheel degrees per encoder count
+        self.K2 = 0.2505 # wheel degrees per encoder count
         self.K3 = K3 # effort=%pwm / (wheel degrees/sec)
     def set_Kp(self, Kp):
         self.Kp = Kp

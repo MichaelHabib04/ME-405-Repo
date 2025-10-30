@@ -64,9 +64,9 @@ mot_right = motor_driver(Pin.cpu.A6, Pin.cpu.A1, Pin.cpu.A0, Timer(16, freq=6000
 
 #CONTROLLER SETPOINT IS IN MM/S
 cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
-                 v_nom=5.0, threshold=4.0, K3=1.382)
+                 v_nom=5.0, threshold=4.0, K3=1.3792)
 cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
-                 v_nom=5.0, threshold=4.0, K3=1.4272)
+                 v_nom=5.0, threshold=4.0, K3=1.4243)
 
 
 
