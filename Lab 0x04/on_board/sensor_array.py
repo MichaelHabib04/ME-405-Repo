@@ -26,7 +26,7 @@ class sensor_array:
             reads_calib += 1
             sum += self.sensors[j].read()
         for i in range(len(self.sensors)):
-            self.sensors[i].set_black(sums[i] / reads_calib)
+            self.sensors[i].set_white(sums[i] / reads_calib)
     
     def sensor(self):
         
