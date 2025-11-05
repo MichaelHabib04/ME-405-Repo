@@ -14,8 +14,8 @@ class sensor_array:
         sums = [0 for sensor in self.sensors]
         for i in range(100):
             for j in range(len(self.sensors)):
-                reads_calib += 1
-                sums += self.sensors[j].read()
+            reads_calib += 1
+            sums += self.sensors[j].read()
         for i in range(len(self.sensors)):
             self.sensors[i].set_black(sums[i]/reads_calib)
     def calibrate_white(self):
@@ -23,8 +23,8 @@ class sensor_array:
         sums = [0 for sensor in self.sensors]
         for i in range(100):
             for j in range(len(self.sensors)):
-                reads_calib += 1
-                sum += self.sensors[j].read()
+            reads_calib += 1
+            sum += self.sensors[j].read()
         for i in range(len(self.sensors)):
             self.sensors[i].set_black(sums[i] / reads_calib)
     
