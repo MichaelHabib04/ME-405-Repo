@@ -8,37 +8,52 @@ class sensor_array:
         self.sensors = sensors
         self.center = center # index of central sensor
         self.dist_mm = dist_mm  # distance in milimeters between sensors
-        self.reads = [0 for sensor in sensors]
+        self.raw_reads = [0 for sensor in sensors]
+        self.whites = [0 for sensor in sensors]
+        self.blacks = [0 for sensor in sensors]
+
+    # CALCULATE AVERAGE OVER ONE HUNDRED READINGS FOR EACH SENSOR.
     def calibrate_black(self):
         reads_calib = 0
         sums = [0 for sensor in self.sensors]
         for i in range(100):
             for j in range(len(self.sensors)):
+                sums[j] += self.sensors[j].read() # sum readings so they can be averaged
             reads_calib += 1
-                sums += self.sensors[j].read()
         for i in range(len(self.sensors)):
             self.sensors[i].set_black(sums[i]/reads_calib)
+            self.blacks[i] = sums[i]/reads_calib
     def calibrate_white(self):
         reads_calib = 0
         sums = [0 for sensor in self.sensors]
         for i in range(100):
             for j in range(len(self.sensors)):
+                sums[j] += self.sensors[j].read()
             reads_calib += 1
-                sum += self.sensors[j].read()
         for i in range(len(self.sensors)):
             self.sensors[i].set_white(sums[i] / reads_calib)
+            self.whites[i] = sums[i] / reads_calib
+    def array_read(self):
+        for i in range(len(self.sensors)):
+            self.raw_reads[i] = self.sensors[i].read()
 
     def find_centroid(self):
+        # sum_vals = 0
+        # weighted_sum = 0
+        # for i in range(len(self.sensors)):
+        #     raw_val = self.sensors[i].read()
+        #     self.norm_val = (self.sensors[i].get_white()-white)/(self.sensors[i].get_white-self.sensors[i].get_black())
+        #     sum_vals += self.norm_val
+        #     weighted_sum += self.norm_val*i
+        # self.centroid = weighted_sum/sum_vals
         sum_vals = 0
         weighted_sum = 0
         for i in range(len(self.sensors)):
             raw_val = self.sensors[i].read()
-            self.norm_val = (self.sensors[i].get_white()-white)/(self.sensors[i].get_white-self.sensors[i].get_black())
-            sum_vals += self.norm_val
-            weighted_sum += self.norm_val*i
-        self.centroid = weighted_sum/sum_vals
-    
-    def sensor(self):
+            norm_val = min(max((raw_val - self.blacks[i]) / (self.whites[i] - self.blacks[i]), 0), 1) # normalize between calibrated black and white values, cap values at 0 and 1
+            sum_vals += norm_val
+            weighted_sum += norm_val*(i - self.center)
+        return (weighted_sum/sum_vals)*self.dist_mm
         
     # def sensor_on:
 
