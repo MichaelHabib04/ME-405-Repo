@@ -27,33 +27,33 @@ while True:
     sleep_ms(100)
 
 
-def line_follower():
-    state = 0
-    while True:
-        if state == 0:
-            sensors = sensor_array(channels, 4, 2)
-            # Calibration
-            state = 1
-        if state == 1:
-            # wait state
-            if r:
-                state = 2
-            elif t:
-                state = 3
-            elif black_flag and white_flag:
-                state = 4
-        if state == 2:
-            black_val = sensors.calibrate_black
-            sleep_ms(500)
-            black_flag = 1
-            print("Black has been calibrated")
-            state = 1 
-        if state == 3:
-            white_val = sensors.calibrate_white
-            sleep_ms(500)
-            white_flag = 1
-            print("White has been claibrated")
-        if state == 4:
-            centroid = sensors.find_centroid
-            
+# def line_follower():
+#     state = 0
+#     while True:
+#         if state == 0:
+#             sensors = sensor_array(channels, 4, 2)
+#             # Calibration
+#             state = 1
+#         if state == 1:
+#             # wait state
+#             if r:
+#                 state = 2
+#             elif t:
+#                 state = 3
+#             elif black_flag and white_flag:
+#                 state = 4
+#         if state == 2:
+#             black_val = sensors.calibrate_black
+#             sleep_ms(500)
+#             black_flag = 1
+#             print("Black has been calibrated")
+#             state = 1
+#         if state == 3:
+#             white_val = sensors.calibrate_white
+#             sleep_ms(500)
+#             white_flag = 1
+#             print("White has been claibrated")
+#         if state == 4:
+#             centroid = sensors.find_centroid
+#
     

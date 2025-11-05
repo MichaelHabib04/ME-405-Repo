@@ -9,7 +9,7 @@ from Encoder import Encoder
 from motor_driver import motor_driver
 from time import sleep_ms
 from pyb import USB_VCP
-from controller import CLMotorController
+from controller import CLMotorController, IRController
 from ir_sensor import IR_sensor
 from sensor_array import sensor_array
 from machine import UART
@@ -79,6 +79,56 @@ ir_ch10= IR_sensor(Pin(Pin.cpu.C5, mode=Pin.ANALOG))
 channels = [ir_ch4, ir_ch5, ir_ch6, ir_ch7, ir_ch8, ir_ch9, ir_ch10]
 ir_sensor_array = sensor_array(channels, 4, 8)
 
+centroid_set_point = 0
+ir_controller = IRController(centroid_set_point, 0, 0, Kp=1, Ki=0)
+
+def IR_sensor(shares):
+    global centroid_set_point
+    calib_black, calib_white, line_follow, L_speed_share, R_speed_share = shares
+    state = 0
+    while True:
+        # print("IR TASK CALLED")
+        if state == 0: # wait for a flag to be set
+            if calib_black.get() == 1:
+                state = 1
+            elif calib_white.get() == 1:
+                state = 2
+            elif line_follow.get() == 1:
+                state = 3
+        elif state == 1:
+            print("Starting Black Calibration!")
+            calib_start = ticks_ms()
+            ir_sensor_array.calibrate_black()
+            calib_end = ticks_ms()
+            calib_time = ticks_diff(calib_end, calib_start)
+            print(f"Calibration complete! Time elapsed: {calib_time/1000}")
+            print(f"Black Values: {ir_sensor_array.blacks}")
+            calib_black.put(0)
+            state = 0
+        elif state == 2:
+            print("Starting White Calibration!")
+            calib_start = ticks_ms()
+            ir_sensor_array.calibrate_white()
+            calib_end = ticks_ms()
+            calib_time = ticks_diff(calib_end, calib_start)
+            print(f"Calibration complete! Time elapsed: {calib_time/1000}")
+            print(f"White Values: {ir_sensor_array.whites}")
+            calib_white.put(0)
+            state = 0
+        elif state == 3:
+            ir_controller.set_target(centroid_set_point)
+            ir_sensor_array.array_read()
+            ir_ticks_new = ticks_us() # timestamp sensor reading for controller
+            wheel_speed_diff = ir_controller.get_action(ir_sensor_array.find_centroid(), ir_ticks_new)
+            # split the difference in wheel speeds evenly between the two wheels
+            L_speed = L_speed_share.get()
+            R_speed = R_speed_share.get()
+            L_speed += wheel_speed_diff/2
+            R_speed += wheel_speed_diff/2
+            L_speed_share.put(L_speed)
+            R_speed_share.put(R_speed)
+        yield state
+
 
 
 """
@@ -86,6 +136,16 @@ ir_sensor_array = sensor_array(channels, 4, 8)
 AUTOMATICALLY UPDATES THE DIRECTION SHARE, ONLY SET EFFORT AND ENABLE SHARES:
 L_eff_share, L_en_share, R_eff_share, R_en_share
 
+
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
+IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
 """
 def left_ops(shares):
     print("LEFT OPS")
@@ -424,13 +484,8 @@ def battery_read(shares):
         else:
             low_bat_flag.put(0)
         # print("END BATTERY TASK")
-        print(f"Battery task: {battery.get()}, {low_bat_flag.get()}")
+        # print(f"Battery task: {battery.get()}, {low_bat_flag.get()}")
         yield 0
-
-def IR_sensor(shares):
-    state = 0
-    while True:
-        if state == 0: # create controller object
 
 # This code creates a share, a queue, and two tasks, then starts the tasks. The
 # tasks run until somebody presses ENTER, at which time the scheduler stops and
@@ -461,6 +516,10 @@ if __name__ == "__main__":
     print_out = task_share.Share('H', thread_protect=False, name="print out")
     bat_share = task_share.Share('f', thread_protect=False, name="print out")
     bat_flag = task_share.Share('H', thread_protect=False, name="print out")
+    calib_black = task_share.Share('H', thread_protect=False, name="print out")
+    calib_white = task_share.Share('H', thread_protect=False, name="print out")
+    line_follow = task_share.Share('H', thread_protect=False, name="print out")
+
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
     # R_time_queue = task_share.Queue('I', 100, name="R time")
@@ -492,6 +551,8 @@ if __name__ == "__main__":
 
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=1000,
                                 profile=True, trace=True, shares=(bat_share, bat_flag))
+    task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=5, period=50,
+                                    profile=True, trace=True, shares=(calib_black, calib_white, line_follow, L_eff_share, R_eff_share))
 
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
@@ -503,6 +564,7 @@ if __name__ == "__main__":
     cotask.task_list.append(task_ui)
     cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
+    cotask.task_list.append(task_IR_sensor)
 
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started
