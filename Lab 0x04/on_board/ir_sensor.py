@@ -14,6 +14,14 @@ class IR_sensor:
 
     def read(self):
         return self.ADC.read()
+
+    def set_white(self, white_val):
+        self.white_val = white_val
+
+    def set_black(self, white_val):
+        self.black_val = black_val
+
+        
     # def sensor_on:
 
     # def sensor_off:
