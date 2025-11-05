@@ -1,10 +1,9 @@
 from pyb import Pin, Timer, ADC
-import ir_sensor
+from ir_sensor import IR_sensor
 
 class sensor_array:
-
     # def __init__(self, s1: ir_sensor, s2: ir_sensor, s3: ir_sensor, s4: ir_sensor, s5: ir_sensor, s6: ir_sensor, s7: ir_sensor):
-    def __init(self, sensors: list[ir_sensor], center: int, dist_mm: float):
+    def __init__(self, sensors: list[IR_sensor], center: int, dist_mm: float):
         self.sensors = sensors
         self.center = center # index of central sensor
         self.dist_mm = dist_mm  # distance in milimeters between sensors
