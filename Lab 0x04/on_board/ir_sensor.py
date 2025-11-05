@@ -21,6 +21,11 @@ class IR_sensor:
     def set_black(self, white_val):
         self.black_val = black_val
 
+    def get_white(self):
+        return self.white_val
+
+    def set_black(self):
+        return self.black_val
         
     # def sensor_on:
 
