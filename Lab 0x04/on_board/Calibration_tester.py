@@ -15,6 +15,7 @@ ir_sensor_array = sensor_array(channels, 4, 8)
 
 centroid_set_point = 0
 
+
 print("Starting Black Calibration!")
 calib_start = ticks_ms()
 ir_sensor_array.calibrate_black()
@@ -24,3 +25,21 @@ print(f"Calibration complete! Time elapsed: {calib_time/1000}")
 print(f"Black Values: {ir_sensor_array.blacks}")
 # calib_black.put(0)
 # state = 0
+
+sleep_ms(3000)
+print("Starting White Calibration!")
+calib_start = ticks_ms()
+ir_sensor_array.calibrate_white()
+calib_end = ticks_ms()
+calib_time = ticks_diff(calib_end, calib_start)
+print(f"Calibration complete! Time elapsed: {calib_time/1000}")
+print(f"White Values: {ir_sensor_array.whites}")
+sleep_ms(1000)
+
+print("calculating centroids")
+while True:
+    ir_sensor_array.array_read()
+    # print(ir_sensor_array.raw_reads)
+    sleep_ms(100)
+    print(f"{ir_sensor_array.raw_reads}, centroid location: {ir_sensor_array.find_centroid()}")
+

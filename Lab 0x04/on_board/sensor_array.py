@@ -49,10 +49,10 @@ class sensor_array:
         weighted_sum = 0
         for i in range(len(self.sensors)):
             raw_val = self.sensors[i].read()
-            norm_val = min(max((raw_val - self.blacks[i]) / (self.whites[i] - self.blacks[i]), 0), 1) # normalize between calibrated black and white values, cap values at 0 and 1
+            norm_val = (raw_val - self.whites[i])/(self.blacks[i] - self.whites[i]) # normalize between calibrated black and white values, cap values at 0 and 1
             sum_vals += norm_val
             weighted_sum += norm_val*(i - self.center)
-        return (weighted_sum/sum_vals)*self.dist_mm
+        return (weighted_sum/sum_vals)#*self.dist_mm
         
     # def sensor_on:
 
