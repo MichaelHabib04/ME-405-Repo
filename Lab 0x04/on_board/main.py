@@ -69,14 +69,14 @@ cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=
 cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
                  v_nom=2.878, threshold=1.439, K3=1.4272)
 
-ir_ch4 = IR_sensor(Pin(Pin.cpu.C3, mode=Pin.ANALOG))
-ir_ch5 = IR_sensor(Pin(Pin.cpu.A4, mode=Pin.ANALOG))
-ir_ch6 = IR_sensor(Pin(Pin.cpu.B0, mode=Pin.ANALOG))
+ir_ch1 = IR_sensor(Pin(Pin.cpu.C3, mode=Pin.ANALOG))
+ir_ch3 = IR_sensor(Pin(Pin.cpu.A4, mode=Pin.ANALOG))
+ir_ch5 = IR_sensor(Pin(Pin.cpu.B0, mode=Pin.ANALOG))
 ir_ch7 = IR_sensor(Pin(Pin.cpu.C1, mode=Pin.ANALOG))
-ir_ch8 = IR_sensor(Pin(Pin.cpu.C0, mode=Pin.ANALOG))
-ir_ch9 = IR_sensor(Pin(Pin.cpu.A5, mode=Pin.ANALOG))
-ir_ch10= IR_sensor(Pin(Pin.cpu.C5, mode=Pin.ANALOG))
-channels = [ir_ch4, ir_ch5, ir_ch6, ir_ch7, ir_ch8, ir_ch9, ir_ch10]
+ir_ch9 = IR_sensor(Pin(Pin.cpu.C0, mode=Pin.ANALOG))
+ir_ch11 = IR_sensor(Pin(Pin.cpu.A5, mode=Pin.ANALOG))
+ir_ch13= IR_sensor(Pin(Pin.cpu.C5, mode=Pin.ANALOG))
+channels = [ir_ch1, ir_ch3, ir_ch5, ir_ch7, ir_ch9, ir_ch11, ir_ch13]
 ir_sensor_array = sensor_array(channels, 4, 8)
 
 centroid_set_point = 0
