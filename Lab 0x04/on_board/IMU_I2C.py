@@ -1,5 +1,6 @@
 from pyb import I2C
 import time
+import struct
 
 """! BNO055 Memory addresses !"""
 
@@ -64,13 +65,13 @@ class IMU_I2C:
             calData = bytearray(f.read(22)) # Read text file and store into byte array
         self.I2Cobj.mem_write(calData, self.address, calib_coeff_addr, timeout=5000, addr_size=8)
     
-    def readEulerAngles(): # Reads Euler Angles from the IMU
+    def readEulerAngles(self): # Reads Euler Angles from the IMU
         get_eulers = self.I2Cobj.mem_read(6, self.address, eul_head_lsb)
         h, r, p = struct.unpack('<hhh', get_eulers)
         # Pg 35,  16 units per degree conversion
         return (h / 16.0, r / 16.0, p / 16.0)
     
-    def readAngluarVelocity(): # Reads angular velocity from the IMU
+    def readAngluarVelocity(self): # Reads angular velocity from the IMU
         get_ang_vel = self.I2Cobj.mem_read(6, self.address, gyr_data_x_lsb)
         x, y, z = struct.unpack('<hhh', get_ang_vel)
         return (x, y, z)
