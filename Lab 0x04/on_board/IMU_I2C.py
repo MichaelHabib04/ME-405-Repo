@@ -2,6 +2,7 @@ from pyb import I2C
 import time
 import struct
 
+
 """! BNO055 Memory addresses !"""
 
 op_mode_addr = 0x3D # Page 70 of the BNO055 data sheet

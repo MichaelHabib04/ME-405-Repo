@@ -1,4 +1,5 @@
 from pyb import Timer, Pin, I2C
+import IMU_I2C
 
 BNO055_ADDRESS_B = 0x29
 
@@ -27,9 +28,18 @@ BNO055_AXIS_MAP_SIGN_ADDR = 0X42
 
 #Calibration data start
 
-i2c = I2C(2)                             # create on bus 1
-i2c = I2C(2, I2C.CONTROLLER)             # create and init as a controller
-i2c.init(I2C.CONTROLLER, baudrate=20000) # init as a controller
+# Create Pins for IMU operations
+
+PB10 = Pin(Pin.cpu.B10, mode=Pin.ALT, alt=4) # I2C2 SCL
+PB11 = Pin(Pin.cpu.B11, mode=Pin.ALT, alt=4) # I2C2 SDA
+
+# Create I2C controller object
+i2c = I2C(PB10, PB11, 400000) # BNO055 SCL freq = 400 kHz
+
+IMU = IMU_I2C(i2c, BNO055_OPR_MODE_ADDR)
+
+# i2c = I2C(2, I2C.CONTROLLER)             # create and init as a controller
+# i2c.init(I2C.CONTROLLER, baudrate=20000) # init as a controller
 # i2c.init(I2C.PERIPHERAL, addr=0x29)      # init as a peripheral with given addressss
 # i2c.deinit()                             # turn off the I2C unit
 devs = i2c.scan()
