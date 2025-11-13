@@ -85,12 +85,12 @@ class IMU_I2C:
         get_eulers = self.I2Cobj.mem_read(6, self.address, eul_head_lsb)
         h, r, p = struct.unpack('<hhh', get_eulers)
         # Pg 35,  16 units per degree conversion
-        return (h / 16.0, r / 16.0, p / 16.0)
+        return (h / 900, r / 900, p / 900)
     
     def readAngularVelocity(self): # Reads angular velocity from the IMU
         get_ang_vel = self.I2Cobj.mem_read(6, self.address, gyr_data_x_lsb)
         x, y, z = struct.unpack('<hhh', get_ang_vel)
-        return (x, y, z)
+        return (x/900, y/900, z/900)
     
     def readLinearAcceleration(self): # Reads angular velocity from the IMU
         get_lin_acc = self.I2Cobj.mem_read(6, self.address, acc_data_x_lsb)

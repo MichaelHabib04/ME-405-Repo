@@ -75,24 +75,18 @@ if cal_file in os_files:
         print(cal_status)
 else:
 
-    cal_status = IMU.retrieveCalStatus()
-    print("Calibration status: sys, gyro, acc, mag")
-    print(cal_status)
+    cal_bit = False
+    IMU.changeOpMode(full_sensor_fusion_op_mode)
+    while not cal_bit:
+        cal_status = IMU.retrieveCalStatus()
+        # print("Calibration status: sys, gyro, acc, mag")
+        sleep_ms(100)
+        print(cal_status)
+        if (cal_status[1]==3 and cal_status[2]==3 and cal_status[3]==3):
+            cal_bit = True
     
+    print("IMU Calibrated")
     
-    if cal_status[1]==cal_status[2]==cal_status[3]==3:
-        print("IMU calibrated")
-        
-    else: # Process to calibrate the IMU
-        print("IMU not calibrated")
-        IMU.changeOpMode(full_sensor_fusion_op_mode) # Changes op mode to full sensor fusion mode
-        print("Op mode changed")
-        sleep(2)
-        status = IMU.retrieveCalStatus()
-        if (status[1]==3 and status[2]==3 and status[3]==3):
-            IMU.retrieveCalCoefficients()
-            sleep(.2)
-            print(IMU.retrieveCalStatus())
     cal_data_bytes = IMU.retrieveCalCoefficients()
     print(cal_data_bytes)
     with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
@@ -102,7 +96,33 @@ else:
 
 while True:
     sleep_ms(100)
-    print(IMU.readLinearAcceleration())
+    # print(IMU.readLinearAcceleration())
+    print(IMU.readAngularVelocity())
+
+
+# if cal_status[1]==cal_status[2]==cal_status[3]==3:
+#     print("IMU calibrated")
+    
+# else: # Process to calibrate the IMU
+#     print("IMU not calibrated")
+#     IMU.changeOpMode(full_sensor_fusion_op_mode) # Changes op mode to full sensor fusion mode
+#     print("Op mode changed")
+#     sleep(2)
+#     status = IMU.retrieveCalStatus()
+#     if (status[1]==3 and status[2]==3 and status[3]==3):
+#         IMU.retrieveCalCoefficients()
+#         sleep(.2)
+#         print(IMU.retrieveCalStatus())
+# cal_data_bytes = IMU.retrieveCalCoefficients()
+# print(cal_data_bytes)
+# with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
+#     f.write(cal_data_bytes)   
+
+# print(os.listdir()) # Can be used to check if cal file exists
+
+# while True:
+#     sleep_ms(100)
+#     print(IMU.readLinearAcceleration())
     # print(IMU.readAngularVelocity())
 
     
