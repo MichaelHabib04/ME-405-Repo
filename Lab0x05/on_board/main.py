@@ -224,13 +224,27 @@ def IMU_OP(shares):
             print(os.listdir()) # Can be used to check if cal file exists
     if state==1:    # Initialize reference Yaw based on encoder values
         print("State 1")
-        # Psi = Sr - Sl/w (use encoder values)
-        # Create u* = u/y vector (vl, vr, sl, sr, psi, psi_dot)
+        s_r = R_pos.get()
+        s_l = L_pos.get()
+        w = 141
+        r = 35
+        psi = (s_r - s_l)/w
+        v_r = R_vel.get()
+        v_l = L_vel.get()
+        psi_dot = IMU.readAngularVelocity()[2]
+        u_star = [v_l, v_r, s_l, s_r, psi, psi_dot]
+        x = np.array(np.zeros(4).reshape(4,))
+        x[0] = v_l/r
+        x[1] = v_r/r
+        x[2] = (s_r-s_l)/2
+        x[3] = IMU.readEulerAngles()[2]
         state = 2
         
     if state==2:
         print("State 2")
         # Run observer and update equations
+        
+        coord_new = syst_eq(x, u_star)
         #x_k+1 = Ad*xk + Bd*u*
         #y_k = C*xk + D*u
     
@@ -238,7 +252,25 @@ def IMU_OP(shares):
     
 
 
-
+A_d = np.array([0.4542,   0.4465,   0.2152,   0.0815,
+                0.4465,   0.4542,   0.1958,   0.1210,
+                0.1836,   0.1641,   0.2806,  -0.3541,
+                0.0659,   0.1054,  -0.3541,   0.8245])
+A_d.reshape(4,4)
+B_d = np.array([1.6280,   1.0478,  -0.1070,  -0.1082,  -0.0000,  -1.6803,
+                1.0478,   1.6280,  -0.0970,  -0.0987,  -0.0000,   1.9724,
+                0.4308,   0.3851,   0.3572,   0.3622,   0.0000,  -0.4556,
+                0.1547,   0.2474,   0.1758,   0.1783,   0.0000,   1.4227])
+B_d.reshape(4,6)
+C = np.array([  0,        0,   1.0000,  -70.5000,
+                0,        0,   1.0000,  70.5000,
+                0,        0,        0,   1.0000,
+                -0.2482,  0.2482,   0,         0])
+def syst_eq(x, u_aug):
+    global A_d, B_d, C_d
+    new_x = np.dot(A_d, x) + np.dot(B_d, u_aug)
+    new_y = np.dot(C_d, x) + np.dot(0, u_aug)
+    return new_x, new_y
 
 
 """
@@ -699,6 +731,8 @@ if __name__ == "__main__":
     task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=5, period=50,
                                     profile=True, trace=True, shares=(calib_black, calib_white, line_follow, L_eff_share, R_eff_share, wheel_diff))
 
+    task_IMU_OP = cotask.Task(IMU_OP, name="IMU Op", priority=0, period=100, 
+                              profile=True, trace=True, shares=(R_pos_share, L_pos_share, R_vel_share, L_vel_share))
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
 
@@ -710,6 +744,7 @@ if __name__ == "__main__":
     cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
     cotask.task_list.append(task_IR_sensor)
+    cotask.task_list.append(task_IMU_OP)
 
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started
