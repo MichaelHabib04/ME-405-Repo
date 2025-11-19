@@ -15,16 +15,17 @@ from sensor_array import sensor_array
 from machine import UART
 from IMU_I2C import IMU_I2C
 import os
+from ulab import numpy as np
 
 ser = USB_VCP()
 
 # Setup Pins for bluetooth module
 # Deconfigure default pins
-Pin(Pin.cpu.A2,  mode=Pin.ANALOG)   # Set pin modes back to default
-Pin(Pin.cpu.A3,  mode=Pin.ANALOG)
+Pin(Pin.cpu.A2, mode=Pin.ANALOG)  # Set pin modes back to default
+Pin(Pin.cpu.A3, mode=Pin.ANALOG)
 
 # Configure the selected pins in coordination with the alternate function table
-Pin(Pin.cpu.B6,  mode=Pin.ALT, alt=7) # Set pin modes to UART matching column 7 in alt. fcn. table
+Pin(Pin.cpu.B6, mode=Pin.ALT, alt=7)  # Set pin modes to UART matching column 7 in alt. fcn. table
 Pin(Pin.cpu.B7, mode=Pin.ALT, alt=7)
 
 uart = UART(1, 115200)  # init with given baudrate
@@ -64,12 +65,11 @@ mot_right = motor_driver(Pin.cpu.A6, Pin.cpu.A1, Pin.cpu.A0, Timer(16, freq=6000
 PC2 = Pin(Pin.cpu.C2, mode=Pin.ANALOG)
 BAT_READ = pyb.ADC(PC2)
 
-
-#CONTROLLER SETPOINT IS IN MM/S
+# CONTROLLER SETPOINT IS IN MM/S
 cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
-                 v_nom=2.878, threshold=1.439, K3=1.382)
+                                     v_nom=2.878, threshold=1.439, K3=1.382)
 cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
-                 v_nom=2.878, threshold=1.439, K3=1.4272)
+                                      v_nom=2.878, threshold=1.439, K3=1.4272)
 
 ir_ch1 = IR_sensor(Pin(Pin.cpu.C3, mode=Pin.ANALOG))
 ir_ch3 = IR_sensor(Pin(Pin.cpu.A4, mode=Pin.ANALOG))
@@ -77,12 +77,13 @@ ir_ch5 = IR_sensor(Pin(Pin.cpu.B0, mode=Pin.ANALOG))
 ir_ch7 = IR_sensor(Pin(Pin.cpu.C1, mode=Pin.ANALOG))
 ir_ch9 = IR_sensor(Pin(Pin.cpu.C0, mode=Pin.ANALOG))
 ir_ch11 = IR_sensor(Pin(Pin.cpu.C4, mode=Pin.ANALOG))
-ir_ch13= IR_sensor(Pin(Pin.cpu.C5, mode=Pin.ANALOG))
+ir_ch13 = IR_sensor(Pin(Pin.cpu.C5, mode=Pin.ANALOG))
 channels = [ir_ch1, ir_ch3, ir_ch5, ir_ch7, ir_ch9, ir_ch11, ir_ch13]
 ir_sensor_array = sensor_array(channels, 4, 8)
 
 centroid_set_point = 0
 ir_controller = IRController(centroid_set_point, 0, 0, Kp=3, Ki=1)
+
 
 def IR_sensor(shares):
     global centroid_set_point
@@ -90,7 +91,7 @@ def IR_sensor(shares):
     state = 0
     while True:
         # print("IR TASK CALLED")
-        if state == 0: # wait for a flag to be set
+        if state == 0:  # wait for a flag to be set
             if calib_black.get() == 1:
                 state = 1
             elif calib_white.get() == 1:
@@ -103,7 +104,7 @@ def IR_sensor(shares):
             # ir_sensor_array.calibrate_black()
             calib_end = ticks_ms()
             calib_time = ticks_diff(calib_end, calib_start)
-            print(f"Calibration complete! Time elapsed: {calib_time/1000}")
+            print(f"Calibration complete! Time elapsed: {calib_time / 1000}")
             print(f"Black Values: {ir_sensor_array.blacks}")
             # ir_sensor_array.blacks = [3206.13, 2983.14, 3063.67, 2910.69, 2800.52, 2930.22, 3063.97]
             calib_black.put(0)
@@ -114,7 +115,7 @@ def IR_sensor(shares):
             # ir_sensor_array.calibrate_white()
             calib_end = ticks_ms()
             calib_time = ticks_diff(calib_end, calib_start)
-            print(f"Calibration complete! Time elapsed: {calib_time/1000}")
+            print(f"Calibration complete! Time elapsed: {calib_time / 1000}")
             print(f"White Values: {ir_sensor_array.whites}")
             # ir_sensor_array.whites = [360.62, 299.06, 297.68, 286.17, 281.66, 295.05, 316.05]
             calib_white.put(0)
@@ -124,7 +125,7 @@ def IR_sensor(shares):
             ir_sensor_array.whites = [360.62, 299.06, 297.68, 286.17, 281.66, 295.05, 316.05]
             ir_controller.set_target(centroid_set_point)
             ir_sensor_array.array_read()
-            ir_ticks_new = ticks_us() # timestamp sensor reading for controller
+            ir_ticks_new = ticks_us()  # timestamp sensor reading for controller
             wheel_speed_diff = ir_controller.get_action(ir_ticks_new, ir_sensor_array.find_centroid())
             # split the difference in wheel speeds evenly between the two wheels
             wheel_diff.put(wheel_speed_diff)
@@ -135,15 +136,15 @@ def IR_sensor(shares):
 
 """! BNO055 Memory addresses !"""
 
-op_mode_addr = 0x3D # Page 70 of the BNO055 data sheet
+op_mode_addr = 0x3D  # Page 70 of the BNO055 data sheet
 """! Operation mode byte:
     Bits 4-7 reserved
     Bits 0-3 Operation Mode    
 !"""
 
-calib_stat_addr = 0x35 # Pg 67, Calibration Status Byte
-calib_coeff_addr = 0x55 # Pg 50, Calibration Coefficients Starting Address
-eul_head_lsb = 0x1A #Pg 52, Heading for Euler angle Starting Address
+calib_stat_addr = 0x35  # Pg 67, Calibration Status Byte
+calib_coeff_addr = 0x55  # Pg 50, Calibration Coefficients Starting Address
+eul_head_lsb = 0x1A  # Pg 52, Heading for Euler angle Starting Address
 """!
 Calibration Status Byte bit map;
 3 indicates fully calibrated, 0 indicates not calibrated
@@ -155,35 +156,60 @@ Bit 6 and 7 - Sys
 
 !"""
 
-acc_data_x_lsb = 0x08 # Mem location where 
-gyr_data_x_lsb = 0x14 # Pg 52, gyro data
+acc_data_x_lsb = 0x08  # Mem location where
+gyr_data_x_lsb = 0x14  # Pg 52, gyro data
 
-    
 """! Data to write to BNO055 !"""
-config_op_mode = 0b0000 # Page 21
-IMU_op_mode = 0b1000 # Page 21, does not use mag
-compass_mode = 0b1001 # Page 21
-m4g_mode = 0b1010 # Page 21
-ndof_fmc_off_mode = 0b1011 # Page 21
-ndof = 0b1100 # Page 21
-full_sensor_fusion_op_mode = 0x0C # Uses all sensors
+config_op_mode = 0b0000  # Page 21
+IMU_op_mode = 0b1000  # Page 21, does not use mag
+compass_mode = 0b1001  # Page 21
+m4g_mode = 0b1010  # Page 21
+ndof_fmc_off_mode = 0b1011  # Page 21
+ndof = 0b1100  # Page 21
+full_sensor_fusion_op_mode = 0x0C  # Uses all sensors
 
-
-IMU_addr = 0x28 # BNO055 device address
+IMU_addr = 0x28  # BNO055 device address
 # Create Pins for IMU operations
 
-PB10 = Pin(Pin.cpu.B10, mode=Pin.ALT, alt=4) # I2C2 SCL
-PB11 = Pin(Pin.cpu.B11, mode=Pin.ALT, alt=4) # I2C2 SDA
+PB10 = Pin(Pin.cpu.B10, mode=Pin.ALT, alt=4)  # I2C2 SCL
+PB11 = Pin(Pin.cpu.B11, mode=Pin.ALT, alt=4)  # I2C2 SDA
 
 # Create I2C controller object
 # i2c = I2C(2)
 i2c = I2C(2, I2C.CONTROLLER)
 
-IMU = IMU_I2C(i2c, IMU_addr) # Create IMU_I2C object
+IMU = IMU_I2C(i2c, IMU_addr)  # Create IMU_I2C object
+
 
 def IMU_OP(shares):
-    state = 0 # Calibration Procedure/Load calibration values
-    if state==0:
+    L_pos_share, R_pos_share, L_eff_share, R_eff_share, L_vel_share, R_vel_share, yaw_angle_share, yaw_rate_share = shares
+    heading_offset = 0
+    robot_width = 141  # mm
+    wheel_radius = 35  # mm
+    T_s = 0.05  # observer timestep in seconds
+    # create state variables
+
+    x_hat_old = np.array(np.zeros(4).reshape(4, ))
+    x_hat_new = np.array(np.zeros(4).reshape(4, ))
+    u_aug = np.array(np.zeros(6).reshape(6, ))
+    y_measured = np.array(np.zeros(4).reshape(4, ))
+    y_hat = np.array(np.zeros(4).reshape(4, ))
+    A_d = np.array([0.4542, 0.4465, 0.2152, 0.0815,
+                    0.4465, 0.4542, 0.1958, 0.1210,
+                    0.1836, 0.1641, 0.2806, -0.3541,
+                    0.0659, 0.1054, -0.3541, 0.8245]).reshape((4, 4))
+    B_d = np.array([1.6280, 1.0478, -0.1070, -0.1082, -0.0000, -1.6803,
+                    1.0478, 1.6280, -0.0970, -0.0987, -0.0000, 1.9724,
+                    0.4308, 0.3851, 0.3572, 0.3622, 0.0000, -0.4556,
+                    0.1547, 0.2474, 0.1758, 0.1783, 0.0000, 1.4227]).reshape((4, 6))
+    C = np.array([0, 0, 1.0000, -70.5000,
+                  0, 0, 1.0000, 70.5000,
+                  0, 0, 0, 1.0000,
+                  -0.2482, 0.2482, 0, 0]).reshape((4, 4))
+
+    state = 0  # Calibration Procedure/Load calibration values
+    old_time = ticks_ms()
+    if state == 0:
         cal_file = "IMU_cal.txt"
         os_files = os.listdir()
         if cal_file in os_files:
@@ -194,7 +220,7 @@ def IMU_OP(shares):
             IMU.changeOpMode(full_sensor_fusion_op_mode)
             sleep_ms(20)
             cal_status = IMU.retrieveCalStatus()
-            if cal_status[1]==cal_status[2]==cal_status[3]==3:
+            if cal_status[1] == cal_status[2] == cal_status[3] == 3:
                 print("IMU calibrated from text file")
                 print(cal_status)
                 state = 1
@@ -203,7 +229,7 @@ def IMU_OP(shares):
                 print(cal_status)
                 state = 1
         else:
-    
+
             cal_bit = False
             IMU.changeOpMode(full_sensor_fusion_op_mode)
             while not cal_bit:
@@ -211,34 +237,64 @@ def IMU_OP(shares):
                 # print("Calibration status: sys, gyro, acc, mag")
                 sleep_ms(100)
                 print(cal_status)
-                if (cal_status[1]==3 and cal_status[2]==3 and cal_status[3]==3):
+                if (cal_status[1] == 3 and cal_status[2] == 3 and cal_status[3] == 3):
                     cal_bit = True
-            
+
             print("IMU Calibrated")
-            
+
             cal_data_bytes = IMU.retrieveCalCoefficients()
             print(cal_data_bytes)
             with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
-                f.write(cal_data_bytes)   
+                f.write(cal_data_bytes)
                 state = 1
-            print(os.listdir()) # Can be used to check if cal file exists
-    if state==1:    # Initialize reference Yaw based on encoder values
+            print(os.listdir())  # Can be used to check if cal file exists
+    if state == 1:  # Initialize reference Yaw based on encoder values
         print("State 1")
+        # y vector:
+        # TODO: convert units to mm
+        y_measured[0] = L_pos_share.get()  # in encoder counts, needs to be converted to mm
+        y_measured[1] = R_pos_share.get()  # in encoder counts, needs to be converted to mm
+        y_measured[2] = IMU.readEulerAngles()[2]  # update yaw angle
+        y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate
+
         # Psi = Sr - Sl/w (use encoder values)
+        y_measured[2] = (y_measured[1] - y_measured[0]) / robot_width
+        heading_offset = y_measured[2]
+
+        # u vector
+        v_left = L_eff_share.get()
+        v_right = R_eff_share.get()
         # Create u* = u/y vector (vl, vr, sl, sr, psi, psi_dot)
+        u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
+
+        old_time = ticks_ms
+        x_hat_old[0] = L_vel_share.get()
+        x_hat_old[1] = R_vel_share.get()
+        x_hat_old[2] = 0  # Romi has not travelled any linear distance yet
+        x_hat_old[3] = y_measured[2]  # yaw rate is already known from output vector
         state = 2
-        
-    if state==2:
+    if state == 2:
         print("State 2")
-        # Run observer and update equations
-        #x_k+1 = Ad*xk + Bd*u*
-        #y_k = C*xk + D*u
-    
+        curr_time = ticks_ms()
+        if ticks_diff(curr_time, old_time) >= 50:
+            old_time = curr_time()
+            # Run observer and update equations
+            x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
+            y_hat = np.dot(C, x_hat_old)
+        y_measured[0] = L_pos_share.get()  # in encoder counts, needs to be converted to mm
+        y_measured[1] = R_pos_share.get()  # in encoder counts, needs to be converted to mm
+        y_measured[2] = IMU.readEulerAngles()[2]  # update yaw angle
+        y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate
+        v_left = L_eff_share.get()
+        v_right = R_eff_share.get()
+        u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
+        yaw_angle_share.put(y_measured[3])
+        yaw_rate_share.put(x_hat_new[3])
+        # update set points for motor controllers
+        L_eff_share.put(x_hat_new[0])
+        R_eff_share.put(x_hat_new[1])
+        state = 2
     yield state
-    
-
-
-
 
 
 """
@@ -257,6 +313,8 @@ IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
 IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
 IMPORTANT: EFFORT SHARE NOW STORES A SPEED IN MM/S, SHOULD BE RETITLED
 """
+
+
 def left_ops(shares):
     print("LEFT OPS")
     state = 0
@@ -265,7 +323,7 @@ def left_ops(shares):
     global L_prev_dir, L_prev_eff, L_prev_en, L_t_start
     # State 0: init
     while True:
-        if state == 0: # initialize shares and vars
+        if state == 0:  # initialize shares and vars
             mot_left.enable()
             left_encoder.zero()
             left_encoder.update()
@@ -273,31 +331,31 @@ def left_ops(shares):
             L_en.put(1)
             L_dir.put(0)
             state = 1
-        elif state == 1: # task stays in state 1 permanently
-            left_encoder.update() # update encoder
+        elif state == 1:  # task stays in state 1 permanently
+            left_encoder.update()  # update encoder
             L_t_new = ticks_us()
-            if L_en.get() != L_prev_en: # check if the enable signal has changed using the global variables
+            if L_en.get() != L_prev_en:  # check if the enable signal has changed using the global variables
                 # global variables are used to store the internal data/state of the task
                 if L_en.get() > 0:
                     left_encoder.zero()
                     mot_left.enable()
-                    L_prev_en = L_en.get() # update internal state variable
+                    L_prev_en = L_en.get()  # update internal state variable
                 else:
                     mot_left.disable()
                     L_prev_en = L_en.get()
             if L_eff.get() != L_prev_eff:
-                L_prev_dir = L_dir.get() # update the direction to match the effort input
+                L_prev_dir = L_dir.get()  # update the direction to match the effort input
                 if L_eff.get() > 0:
                     L_dir.put(1)
                 else:
                     L_dir.put(0)
                 left_base_target = L_eff.get()
                 cl_ctrl_mot_left.set_target(left_base_target)
-                L_prev_eff = L_eff.get() # store and update the effort
-            if(follower_on.get()):  # implement the speed adjustment from the line follower task
-                follower_diff = line_follower_diff.get()/2
+                L_prev_eff = L_eff.get()  # store and update the effort
+            if (follower_on.get()):  # implement the speed adjustment from the line follower task
+                follower_diff = line_follower_diff.get() / 2
                 cl_ctrl_mot_left.set_target(left_base_target - follower_diff)
-            
+
             # print("LINE 113")
             t_print = cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity())
             # print(f"ticks: {L_t_new}, vel: {left_encoder.get_velocity()}, eff: {t_print}")
@@ -310,6 +368,7 @@ def left_ops(shares):
             L_time.put(ticks_diff(L_t_new, L_t_start))
             # print(L_pos.get(), L_vel.get(), L_time.get())
         yield 1
+
 
 def right_ops(shares):
     # print("RIGHT OPS")
@@ -348,11 +407,11 @@ def right_ops(shares):
                     R_dir.put(0)
                 right_base_target = R_eff.get()
                 cl_ctrl_mot_right.set_target(right_base_target)
-                R_prev_eff = R_eff.get() # store and update the effort
-            if(follower_on.get()):  # implement the speed adjustment from the line follower task
-                follower_diff = line_follower_diff.get()/2
+                R_prev_eff = R_eff.get()  # store and update the effort
+            if (follower_on.get()):  # implement the speed adjustment from the line follower task
+                follower_diff = line_follower_diff.get() / 2
                 cl_ctrl_mot_right.set_target(right_base_target + follower_diff)
-                
+
             t_print = cl_ctrl_mot_right.get_action(R_t_new, right_encoder.get_velocity())
             # print(f"RIGHT SPEED: {t_print}")
             mot_right.set_effort(t_print)
@@ -361,6 +420,7 @@ def right_ops(shares):
             R_time.put(ticks_diff(R_t_new, R_t_start))
             # print(R_pos.get(), R_vel.get(), R_time.get())
         yield 1
+
 
 test_start_time = 0
 
@@ -392,7 +452,7 @@ def run_UI(shares):
     global state, l_dir, l_eff, l_en, r_dir, r_eff, r_en, test_start_time
     state = 0
     while True:
-        if state == 0: # init state
+        if state == 0:  # init state
             # Init messenger variables
             l_eff = 0
             l_en = 1
@@ -406,10 +466,10 @@ def run_UI(shares):
             if uart.any():
                 uart.read()
         elif state == 1:
-            if uart.any(): # wait for any character
+            if uart.any():  # wait for any character
                 char_in = uart.read(1).decode()
                 state = 2
-        elif state == 2: # decode character
+        elif state == 2:  # decode character
             if char_in == "r":
                 r_eff += 10
                 R_eff.put(r_eff)
@@ -420,7 +480,7 @@ def run_UI(shares):
                 state = 1
             elif char_in == "c":
                 # print(r_en)
-                if r_en==1:
+                if r_en == 1:
                     r_en = 0
                 else:
                     r_en = 1
@@ -435,16 +495,16 @@ def run_UI(shares):
                 L_eff.put(l_eff)
                 state = 1
             elif char_in == "n":
-                if l_en==1:
+                if l_en == 1:
                     l_en = 0
                 else:
                     l_en = 1
                 L_en.put(l_en)
                 state = 1
             elif char_in == "p":
-                uart.write("Left motor effort: " , l_eff, "\nRight motor effort: ", r_eff)
+                uart.write("Left motor effort: ", l_eff, "\nRight motor effort: ", r_eff)
                 state = 1
-            elif char_in =="b":
+            elif char_in == "b":
                 print(state)
                 state = 1
             elif char_in == "z":
@@ -461,16 +521,16 @@ def run_UI(shares):
                 L_en.put(l_en)
                 l_eff = r_eff
                 L_eff.put(l_eff)
-                Run.put(1) # Indicates start to data collection
-                test_start_time = ticks_ms() # Record start time of test
+                Run.put(1)  # Indicates start to data collection
+                test_start_time = ticks_ms()  # Record start time of test
                 state = 3
-            elif char_in == "i": # run black calibration sequence for IR sensor
-               calib_black.put(1)
-               state = 1
-               print("recieved i")
+            elif char_in == "i":  # run black calibration sequence for IR sensor
+                calib_black.put(1)
+                state = 1
+                print("recieved i")
             elif char_in == "w":
-               calib_white.put(1)
-               state = 1
+                calib_white.put(1)
+                state = 1
             elif char_in == "y":
                 l_en = 1
                 r_en = 1
@@ -480,33 +540,33 @@ def run_UI(shares):
                 L_eff.put(l_eff)
                 L_en.put(l_en)
                 R_en.put(r_en)
-                
+
                 line_follow.put(1)
                 state = 1
-            
+
             else:
                 state = 1
-        elif state == 3: # Start data collection without running the motors so the start of the step response can be observed
+        elif state == 3:  # Start data collection without running the motors so the start of the step response can be observed
             if ticks_diff(ticks_ms(), test_start_time) >= 250:  # enables motors after 250 ms of data collection
                 state = 4
-        elif state == 4: # Turn the motors on, record time so the data collection can be ended at the right time
+        elif state == 4:  # Turn the motors on, record time so the data collection can be ended at the right time
             r_en = 1
             l_en = 1
             R_en.put(r_en)
             L_en.put(l_en)
             test_start_time = ticks_ms()
             state = 5
-        elif state == 5: # Stop collecting data, set flags for data collection task
+        elif state == 5:  # Stop collecting data, set flags for data collection task
             # print("I made it to state 3!")
             # print("Now:", ticks_ms(), "diff:", ticks_diff(ticks_ms(), test_start_time))
-            if ticks_diff(ticks_ms(), test_start_time) >= 2500: # stops test after ~ 2.5 seconds
+            if ticks_diff(ticks_ms(), test_start_time) >= 2500:  # stops test after ~ 2.5 seconds
                 # print("state 3 exit")
                 r_en = 0
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
                 state = 1
-                Run.put(0) # indicates stop to data collection
+                Run.put(0)  # indicates stop to data collection
                 uart.write("STOP STEP RESPONSE______________")
         yield state
 
@@ -515,12 +575,14 @@ def run_UI(shares):
 I got the below helper function from chatGPT, it does not work but it is here
 !"""
 
+
 # Helper function to dump all items from a queue into a list
 def queue_to_list(q):
     data = []
     while q.any():
         data.append(q.get())
     return data
+
 
 """!
 Most recent error message (Katherine):
@@ -533,6 +595,7 @@ TypeError: can't convert dict to int
 What it references as 378 is now 399 because I've added comments'
 
 !"""
+
 
 def collect_data(shares):
     # print("collect data")
@@ -548,14 +611,14 @@ def collect_data(shares):
             QUEUE_SIZE = 400
 
             # Initialize rightside queues
-            RIGHT_POS_Q = cqueue.FloatQueue(QUEUE_SIZE) # Position share is initialized as f
-            RIGHT_VEL_Q = cqueue.FloatQueue(QUEUE_SIZE) # Velocity share is initialized as f
-            R_TIME_Q = cqueue.IntQueue(QUEUE_SIZE)      # Time share is initialized as I
+            RIGHT_POS_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Position share is initialized as f
+            RIGHT_VEL_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Velocity share is initialized as f
+            R_TIME_Q = cqueue.IntQueue(QUEUE_SIZE)  # Time share is initialized as I
 
             # Initialize leftside queues
-            LEFT_POS_Q = cqueue.FloatQueue(QUEUE_SIZE)   # Position share is initialized as f
-            LEFT_VEL_Q = cqueue.FloatQueue(QUEUE_SIZE)   # Velocity share is initialized as f
-            L_TIME_Q = cqueue.IntQueue(QUEUE_SIZE)     # Time share is initialized as I
+            LEFT_POS_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Position share is initialized as f
+            LEFT_VEL_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Velocity share is initialized as f
+            L_TIME_Q = cqueue.IntQueue(QUEUE_SIZE)  # Time share is initialized as I
             print_out.put(0)
             state = 1
         # Wait state
@@ -572,7 +635,7 @@ def collect_data(shares):
                 if RIGHT_VEL_Q.any() and RIGHT_POS_Q.any() and R_TIME_Q.any() and LEFT_VEL_Q.any() and LEFT_POS_Q.any() and L_TIME_Q.any():
                     state = 3
                 # else:
-                    # print("No data to print!")
+                # print("No data to print!")
         # Data collection state
         elif state == 2:
             if run.get():
@@ -614,15 +677,16 @@ def collect_data(shares):
             state = 1
         yield state
 
+
 def battery_read(shares):
     while True:
         # print("BATTERY TASK")
         battery, low_bat_flag = shares
-        battery_level = BAT_READ.read()*3.3/4095 # CONVERT TO VOLTAGE
+        battery_level = BAT_READ.read() * 3.3 / 4095  # CONVERT TO VOLTAGE
         battery.put(battery_level)
         cl_ctrl_mot_left.set_battery(battery_level)
         cl_ctrl_mot_right.set_battery(battery_level)
-        if battery_level<cl_ctrl_mot_left.threshold:
+        if battery_level < cl_ctrl_mot_left.threshold:
             low_bat_flag.put(1)
         else:
             low_bat_flag.put(0)
@@ -630,12 +694,13 @@ def battery_read(shares):
         # print(f"Battery task: {battery.get()}, {low_bat_flag.get()}")
         yield 0
 
+
 # This code creates a share, a queue, and two tasks, then starts the tasks. The
 # tasks run until somebody presses ENTER, at which time the scheduler stops and
 # printouts show diagnostic information about the tasks, share, and queue.
 if __name__ == "__main__":
     uart.write("Testing ME405 stuff in cotask.py and task_share.py\r\n"
-          "Press Ctrl-C to stop and show diagnostics")
+               "Press Ctrl-C to stop and show diagnostics")
 
     # Create a share and a queue to test function and diagnostic printouts
     share0 = task_share.Share('h', thread_protect=False, name="Share 0")
@@ -647,7 +712,7 @@ if __name__ == "__main__":
     L_eff_share = task_share.Share('f', thread_protect=False, name="L eff")
     L_en_share = task_share.Share('H', thread_protect=False, name="L en")
     L_pos_share = task_share.Share('f', thread_protect=False, name="L pos")
-    L_vel_share = task_share.Share('f', thread_protect=False,name="L vel")
+    L_vel_share = task_share.Share('f', thread_protect=False, name="L vel")
     L_time_share = task_share.Share('I', thread_protect=False, name="L time")
     R_dir_share = task_share.Share('H', thread_protect=False, name="R dir")
     R_eff_share = task_share.Share('f', thread_protect=False, name="R eff")
@@ -663,7 +728,8 @@ if __name__ == "__main__":
     calib_white = task_share.Share('H', thread_protect=False, name="print out")
     line_follow = task_share.Share('H', thread_protect=False, name="print out")
     wheel_diff = task_share.Share('f', thread_protect=False, name="wheel speed diff")
-    
+    yaw_angle_share = task_share.Share('f', thread_protect=False, name="yaw angle")
+    yaw_rate_share = task_share.Share('f', thread_protect=False, name="yaw rate")
 
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
@@ -673,7 +739,6 @@ if __name__ == "__main__":
     # L_time_queue = task_share.Queue('I', 100, name="L time")
     # data_share = task_share.Share('i', name="data_share")
 
-
     # Create the tasks. If trace is enabled for any task, memory will be
     # allocated for state transition tracing, and the application will run out
     # of memory after a while and quit. Therefore, use tracing only for
@@ -681,35 +746,45 @@ if __name__ == "__main__":
 
     task_left_ops = cotask.Task(left_ops, name="Left ops", priority=3, period=50,
                                 profile=True, trace=True, shares=(L_dir_share,
-                                                                    L_eff_share, L_en_share, L_pos_share, L_vel_share, L_time_share, wheel_diff, line_follow))
+                                                                  L_eff_share, L_en_share, L_pos_share, L_vel_share,
+                                                                  L_time_share, wheel_diff, line_follow))
     task_right_ops = cotask.Task(right_ops, name="Right ops", priority=4, period=50,
                                  profile=True, trace=True, shares=(R_dir_share,
-                                                                     R_eff_share, R_en_share, R_pos_share, R_vel_share, R_time_share, wheel_diff, line_follow))
+                                                                   R_eff_share, R_en_share, R_pos_share, R_vel_share,
+                                                                   R_time_share, wheel_diff, line_follow))
     # task_dumb_ui = cotask.Task(dumb_ui, name="Dumb UI", priority=1, period=10,
     #                             profile=True, trace=True, shares=(L_eff_share, R_eff_share))
 
     task_ui = cotask.Task(run_UI, name="UI", priority=0, period=60,
-                          profile=True, trace=True, shares=(L_eff_share, L_en_share, R_eff_share, R_en_share, run, print_out))
+                          profile=True, trace=True,
+                          shares=(L_eff_share, L_en_share, R_eff_share, R_en_share, run, print_out))
 
     task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=2, period=50,
-                                profile=True, trace=True, shares=(R_eff_share, L_eff_share, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share, run, print_out))
+                                    profile=True, trace=True, shares=(
+        R_eff_share, L_eff_share, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share, run,
+        print_out))
 
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=1000,
-                                profile=True, trace=True, shares=(bat_share, bat_flag))
+                                    profile=True, trace=True, shares=(bat_share, bat_flag))
     task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=5, period=50,
-                                    profile=True, trace=True, shares=(calib_black, calib_white, line_follow, L_eff_share, R_eff_share, wheel_diff))
+                                 profile=True, trace=True,
+                                 shares=(calib_black, calib_white, line_follow, L_eff_share, R_eff_share, wheel_diff))
+    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=6, period=50,
+                                       profile=True, trace=True, shares=(
+        L_pos_share, R_pos_share, L_eff_share, R_eff_share, L_vel_share, R_vel_share, yaw_angle_share, yaw_rate_share))
 
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
 
     # Add tasks to task list to run in scheduler
     cotask.task_list.append(task_left_ops)
-    cotask.task_list.append(task_right_ops) # only testing with the left motor
+    cotask.task_list.append(task_right_ops)  # only testing with the left motor
     # cotask.task_list.append(task_dumb_ui)
     cotask.task_list.append(task_ui)
     cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
     cotask.task_list.append(task_IR_sensor)
+    cotask.task_list.append(task_state_estimator)
 
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started
@@ -727,7 +802,7 @@ if __name__ == "__main__":
             print('')
             break
     # Print a table of task data and a table of shared information data
-    print('\n' + str (cotask.task_list))
+    print('\n' + str(cotask.task_list))
     print(task_share.show_all())
     print('')
 
