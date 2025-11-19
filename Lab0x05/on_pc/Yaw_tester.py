@@ -40,7 +40,8 @@ def save_csv(filename, data_lines):
 
 
 with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
-    ser.write(b"t\r\n")
+    ser.write(b"l\r\n")
+    ser.write(b"r\r\n")
     sleep(3)
     ser.write(b"z\r\n")
     
@@ -74,7 +75,7 @@ data_Euler = pd.read_csv("Euler_Angle.csv", header=None, names=["time", "EulerAn
 data_Yaw = pd.read_csv("Yaw_rate.csv", header=None, names=["time", "YawRate"])
 
 plt.figure()
-plt.plot(data_Euler["time"], data_Euler["Euler Angle"])
+plt.plot(data_Euler["time"], data_Euler["EulerAngle"])
 
 plt.title("Euler Angle vs Time")
 plt.xlabel("Time (s)")
@@ -82,7 +83,7 @@ plt.ylabel("Euler Angle (rad)")
 
 # Plot
 plt.figure()
-plt.plot(data_Yaw["time"], data_Yaw["Yaw Rate"])
+plt.plot(data_Yaw["time"], data_Yaw["YawRate"])
 plt.title("Yaw Rate vs Time")
 plt.xlabel("Time (s)")
 plt.ylabel("Yaw Rate (rad/s)")

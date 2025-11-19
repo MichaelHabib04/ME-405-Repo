@@ -66,9 +66,9 @@ PC2 = Pin(Pin.cpu.C2, mode=Pin.ANALOG)
 BAT_READ = pyb.ADC(PC2)
 
 # CONTROLLER SETPOINT IS IN MM/S
-cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
+cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=5, min_sat=-100, max_sat=100, t_init=0,
                                      v_nom=2.878, threshold=1.439, K3=1.382)
-cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=1, Ki=5, min_sat=-100, max_sat=100, t_init=0,
+cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=5, min_sat=-100, max_sat=100, t_init=0,
                                       v_nom=2.878, threshold=1.439, K3=1.4272)
 
 ir_ch1 = IR_sensor(Pin(Pin.cpu.C3, mode=Pin.ANALOG))
@@ -209,94 +209,92 @@ def IMU_OP(shares):
 
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_ms()
-    if state == 0:
-        cal_file = "IMU_cal.txt"
-        os_files = os.listdir()
-        if cal_file in os_files:
-            IMU.changeOpMode(config_op_mode)
-            sleep_ms(20)
-            IMU.writeCalCoefficients(cal_file)
-            sleep_ms(20)
-            IMU.changeOpMode(full_sensor_fusion_op_mode)
-            sleep_ms(20)
-            cal_status = IMU.retrieveCalStatus()
-            if cal_status[1] == cal_status[2] == cal_status[3] == 3:
-                print("IMU calibrated from text file")
-                print(cal_status)
-                state = 1
-            else:
-                print("IMU not calibrated for some reason")
-                print(cal_status)
-                state = 1
-                yield state
-        else:
-
-            cal_bit = False
-            IMU.changeOpMode(full_sensor_fusion_op_mode)
-            while not cal_bit:
+    while True:
+        if state == 0:
+            cal_file = "IMU_cal.txt"
+            os_files = os.listdir()
+            if cal_file in os_files:
+                IMU.changeOpMode(config_op_mode)
+                sleep_ms(20)
+                IMU.writeCalCoefficients(cal_file)
+                sleep_ms(20)
+                IMU.changeOpMode(full_sensor_fusion_op_mode)
+                sleep_ms(20)
                 cal_status = IMU.retrieveCalStatus()
-                # print("Calibration status: sys, gyro, acc, mag")
-                sleep_ms(100)
-                print(cal_status)
-                if (cal_status[1] == 3 and cal_status[2] == 3 and cal_status[3] == 3):
-                    cal_bit = True
-                yield state
-
-            print("IMU Calibrated")
-
-            cal_data_bytes = IMU.retrieveCalCoefficients()
-            print(cal_data_bytes)
-            with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
-                f.write(cal_data_bytes)
-                state = 1
-            print(os.listdir())  # Can be used to check if cal file exists
-    if state == 1:  # Initialize reference Yaw based on encoder values
-        print("State 1")
-        # y vector:
-        y_measured[0] = L_pos_share.get()*.153  # in encoder counts, converted to mm
-        y_measured[1] = R_pos_share.get()*.153  # in encoder counts, converted to mm
-        y_measured[2] = IMU.readEulerAngles()[2]  # update yaw angle (rad)
-        y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate (rad/s)
-
-        # Psi = Sr - Sl/w (use encoder values)
-        y_measured[2] = (y_measured[1] - y_measured[0]) / robot_width
-        heading_offset = y_measured[2]
-
-        # u vector
-        v_left = L_voltage_share.get() # pwm effort converted to V in ops tasks
-        v_right = R_voltage_share.get()
-        # Create u* = u/y vector (vl, vr, sl, sr, psi, psi_dot)
-        u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
-
-        old_time = ticks_ms
-        x_hat_old[0] = L_vel_share.get()
-        x_hat_old[1] = R_vel_share.get()
-        x_hat_old[2] = 0  # Romi has not travelled any linear distance yet
-        x_hat_old[3] = y_measured[2]  # yaw rate is already known from output vector
-        state = 2
+                if cal_status[1] == cal_status[2] == cal_status[3] == 3:
+                    print("IMU calibrated from text file")
+                    print(cal_status)
+                    state = 1
+                else:
+                    print("IMU not calibrated for some reason")
+                    print(cal_status)
+                    state = 1
+            else:
+    
+                cal_bit = False
+                IMU.changeOpMode(full_sensor_fusion_op_mode)
+                while not cal_bit:
+                    cal_status = IMU.retrieveCalStatus()
+                    # print("Calibration status: sys, gyro, acc, mag")
+                    sleep_ms(100)
+                    print(cal_status)
+                    if (cal_status[1] == 3 and cal_status[2] == 3 and cal_status[3] == 3):
+                        cal_bit = True
+    
+                print("IMU Calibrated")
+    
+                cal_data_bytes = IMU.retrieveCalCoefficients()
+                print(cal_data_bytes)
+                with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
+                    f.write(cal_data_bytes)
+                    state = 1
+                print(os.listdir())  # Can be used to check if cal file exists
+        elif state == 1:  # Initialize reference Yaw based on encoder values
+            # print("State 1")
+            # y vector:
+            y_measured[0] = L_pos_share.get()*.153  # in encoder counts, converted to mm
+            y_measured[1] = R_pos_share.get()*.153  # in encoder counts, converted to mm
+            y_measured[2] = IMU.readEulerAngles()[2]  # update yaw angle (rad)
+            y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate (rad/s)
+    
+            # Psi = Sr - Sl/w (use encoder values)
+            y_measured[2] = (y_measured[1] - y_measured[0]) / robot_width
+            heading_offset = y_measured[2]
+    
+            # u vector
+            v_left = L_voltage_share.get() # pwm effort converted to V in ops tasks
+            v_right = R_voltage_share.get()
+            # Create u* = u/y vector (vl, vr, sl, sr, psi, psi_dot)
+            u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
+    
+            old_time = ticks_ms
+            x_hat_old[0] = L_vel_share.get()
+            x_hat_old[1] = R_vel_share.get()
+            x_hat_old[2] = 0  # Romi has not travelled any linear distance yet
+            x_hat_old[3] = y_measured[2]  # yaw rate is already known from output vector
+            state = 2
+        elif state == 2:
+            # print("State 2")
+            curr_time = ticks_ms()
+            if ticks_diff(curr_time, old_time) >= 50:
+                old_time = curr_time()
+                # Run observer and update equations
+                x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
+                y_hat = np.dot(C, x_hat_old)
+            y_measured[0] = L_pos_share.get()*.153  # in encoder counts, converted to mm
+            y_measured[1] = R_pos_share.get()*.153  # in encoder counts, converted to mm
+            y_measured[2] = IMU.readEulerAngles()[2]  # update yaw angle
+            y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate
+            v_left = L_voltage_share.get() #pwm converted to V in ops tasks
+            v_right = R_voltage_share.get()
+            u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
+            yaw_angle_share.put(y_measured[3])
+            yaw_rate_share.put(x_hat_new[3])
+            # update set points for motor controllers
+            L_vel_share.put(x_hat_new[0])
+            R_vel_share.put(x_hat_new[1])
+            state = 2
         yield state
-    if state == 2:
-        print("State 2")
-        curr_time = ticks_ms()
-        if ticks_diff(curr_time, old_time) >= 50:
-            old_time = curr_time()
-            # Run observer and update equations
-            x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
-            y_hat = np.dot(C, x_hat_old)
-        y_measured[0] = L_pos_share.get()*.153  # in encoder counts, converted to mm
-        y_measured[1] = R_pos_share.get()*.153  # in encoder counts, converted to mm
-        y_measured[2] = IMU.readEulerAngles()[2]  # update yaw angle
-        y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate
-        v_left = L_voltage_share.get() #pwm converted to V in ops tasks
-        v_right = R_voltage_share.get()
-        u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
-        yaw_angle_share.put(y_measured[3])
-        yaw_rate_share.put(x_hat_new[3])
-        # update set points for motor controllers
-        L_vel_share.put(x_hat_new[0])
-        R_vel_share.put(x_hat_new[1])
-        state = 2
-    yield state
 
 
 """
@@ -332,7 +330,6 @@ def left_ops(shares):
             L_t_start = ticks_us()
             L_en.put(1)
             state = 1
-            yield state
         elif state == 1:  # task stays in state 1 permanently
             left_encoder.update()  # update encoder
             L_t_new = ticks_us()
@@ -343,12 +340,17 @@ def left_ops(shares):
             else:
                 mot_left.disable()
             left_base_target = L_lin_spd.get()
-            cl_ctrl_mot_left.set_target(left_base_target)
-            if follower_on.get():  # implement the speed adjustment from the line follower task
+            if follower_on.get():
                 follower_diff = line_follower_diff.get() / 2
-                cl_ctrl_mot_left.set_target(left_base_target - follower_diff)
-            pwm_percent = cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity()) # mm/s
-            mot_left.set_effort(pwm_percent) # mm/s
+                left_target = left_base_target - follower_diff
+            else:
+                left_target = left_base_target
+            
+            cl_ctrl_mot_left.set_target(left_target)
+            pwm_percent = cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity())
+            mot_left.set_effort(pwm_percent)
+            # print(f"left target speed: {left_target}")
+            print(f"PWM percent: {pwm_percent}")
             L_voltage.put(pwm_percent*4.5/100) #pwm percent sent to motor
             L_pos.put(left_encoder.get_position()) # counts
             L_vel.put(left_encoder.get_velocity()) # counts
@@ -372,7 +374,6 @@ def right_ops(shares):
             R_t_start = ticks_us()
             R_en.put(1)
             state = 1
-            yield state
         elif state == 1:
             right_encoder.update()
             R_t_new = ticks_us()
@@ -424,7 +425,7 @@ Motor step response test:
 
 
 def run_UI(shares):
-    L_eff, L_en, R_eff, R_en, Run, Print_out = shares
+    L_lin_speed, L_en, R_lin_speed, R_en, Run, Print_out = shares
     global state, l_dir, l_eff, l_en, r_dir, r_eff, r_en, test_start_time
     state = 0
     while True:
@@ -447,12 +448,12 @@ def run_UI(shares):
                 state = 2
         elif state == 2:  # decode character
             if char_in == "r":
-                r_eff += 10
-                R_eff.put(r_eff)
+                r_eff += 2
+                R_lin_speed.put(r_eff)
                 state = 1
             elif char_in == "e":
                 r_eff -= 10
-                R_eff.put(r_eff)
+                R_lin_speed.put(r_eff)
                 state = 1
             elif char_in == "c":
                 # print(r_en)
@@ -463,12 +464,12 @@ def run_UI(shares):
                 R_en.put(r_en)
                 state = 1
             elif char_in == "l":
-                l_eff += 10
-                L_eff.put(l_eff)
+                l_eff += 2
+                L_lin_speed.put(l_eff)
                 state = 1
             elif char_in == "k":
                 l_eff -= 10
-                L_eff.put(l_eff)
+                L_lin_speed.put(l_eff)
                 state = 1
             elif char_in == "n":
                 if l_en == 1:
@@ -489,10 +490,10 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
-                l_eff = 10
-                r_eff = -10
-                L_eff.put(l_eff)
-                r_eff.put(r_eff)
+                l_eff = 1
+                r_eff = 1
+                L_lin_speed.put(l_eff)
+                R_lin_speed.put(r_eff)
                 # state = 1
                 Run.put(1)  # Indicates start to data collection
                 test_start_time = ticks_ms()  # Record start time of test
@@ -511,7 +512,7 @@ def run_UI(shares):
                 R_en.put(r_en)
                 L_en.put(l_en)
                 l_eff = r_eff
-                L_eff.put(l_eff)
+                L_lin_speed.put(l_eff)
                 Run.put(1)  # Indicates start to data collection
                 test_start_time = ticks_ms()  # Record start time of test
                 state = 3
@@ -527,8 +528,8 @@ def run_UI(shares):
                 r_en = 1
                 r_eff = 2
                 l_eff = 2
-                R_eff.put(r_eff)
-                L_eff.put(l_eff)
+                R_lin_speed.put(r_eff)
+                L_lin_speed.put(l_eff)
                 L_en.put(l_en)
                 R_en.put(r_en)
 
@@ -574,18 +575,6 @@ def queue_to_list(q):
         data.append(q.get())
     return data
 
-
-"""!
-Most recent error message (Katherine):
-    Traceback (most recent call last):
-  File "main.py", line 460, in <module>
-  File "cotask.py", line 154, in schedule
-  File "main.py", line 378, in collect_data
-TypeError: can't convert dict to int
-
-What it references as 378 is now 399 because I've added comments'
-
-!"""
 
 
 def collect_data(shares):
@@ -689,6 +678,7 @@ def collect_data(shares):
             
             
             uart.write(f"Euler Angles output")
+            print("Got to the Euler angle write in collection task")
             while Psi_Q.any():
                 size += 1
                 uart.write(f"{R_TIME_Q.get()}, {Psi_Q.get()}\r\n")
@@ -719,6 +709,7 @@ def battery_read(shares):
             low_bat_flag.put(0)
         # print("END BATTERY TASK")
         # print(f"Battery task: {battery.get()}, {low_bat_flag.get()}")
+        gc.collect() # Run garbage collector in battery task so that it runs regularly
         yield 0
 
 
@@ -795,7 +786,7 @@ if __name__ == "__main__":
     task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=5, period=50,
                                  profile=True, trace=True,
                                  shares=(calib_black, calib_white, line_follow, L_lin_spd, R_lin_spd, wheel_diff))
-    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=2, period=2000,
+    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=2, period=500,
                                        profile=True, trace=True, shares=(
             L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, yaw_angle_share, yaw_rate_share))
 
@@ -812,7 +803,7 @@ if __name__ == "__main__":
     cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
     # cotask.task_list.append(task_IR_sensor)
-    cotask.task_list.append(task_state_estimator)
+    # cotask.task_list.append(task_state_estimator)
     # cotask.task_list.append(task_IMU_OP)
 
     # Run the memory garbage collector to ensure memory is as defragmented as

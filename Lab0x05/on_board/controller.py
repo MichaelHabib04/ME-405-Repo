@@ -65,8 +65,10 @@ class CLMotorController():
         # To calculate error, first convert set point in mm/s to wheel deg/sec
         # Scale for battery droop
         raw_error = (self.target*self.K1 - new_state*self.K2) # error in WHEEL DEGREES/SEC
-        if raw_error<100000 and raw_error>-100000: # hard-coded method of ignoring faulty encoder reading spikes
+        if raw_error<10000 and raw_error>-10000: # hard-coded method of ignoring faulty encoder reading spikes
             self.error = raw_error
+        else:
+            self.error = 0
         if(self.old_ticks == 0):
             self.old_ticks = new_ticks
             # print(f"init!: self")
@@ -86,6 +88,12 @@ class CLMotorController():
         # print(f"CTRL SIG: {ctrl_sig}, bat_gain: {self.bat_gain}")
         ctrl_sig = max(ctrl_sig, self.min_sat) # apply saturation
         ctrl_sig = min(ctrl_sig, self.max_sat)
+        if abs(ctrl_sig) >= self.max_sat:
+            # Stop integrating if saturated in same direction
+            if (ctrl_sig > 0 and self.error > 0) or (ctrl_sig < 0 and self.error < 0):
+                self.acc_error -= self.error*self.dt  # undo last integral term
+
+        
         return ctrl_sig
 
 class IRController():
