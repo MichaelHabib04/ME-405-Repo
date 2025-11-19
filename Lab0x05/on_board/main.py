@@ -773,6 +773,8 @@ if __name__ == "__main__":
                                        profile=True, trace=True, shares=(
         L_pos_share, R_pos_share, L_eff_share, R_eff_share, L_vel_share, R_vel_share, yaw_angle_share, yaw_rate_share))
 
+    task_IMU_OP = cotask.Task(IMU_OP, name="IMU Op", priority=0, period=100, 
+                              profile=True, trace=True, shares=(R_pos_share, L_pos_share, R_vel_share, L_vel_share))
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
 
