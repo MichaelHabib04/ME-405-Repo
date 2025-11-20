@@ -182,7 +182,7 @@ IMU = IMU_I2C(i2c, IMU_addr)  # Create IMU_I2C object
 
 
 def IMU_OP(shares):
-    L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, yaw_angle_share, yaw_rate_share = shares
+    L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, yaw_angle_share, yaw_rate_share, dist_traveled_share, IMU_time_share = shares
     heading_offset = 0
     robot_width = 141  # mm
     wheel_radius = 35  # mm
@@ -209,6 +209,7 @@ def IMU_OP(shares):
 
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_ms()
+    time_start = ticks_us()
     while True:
         if state == 0:
             cal_file = "IMU_cal.txt"
@@ -274,17 +275,21 @@ def IMU_OP(shares):
             x_hat_old[0] = L_vel_share.get()
             x_hat_old[1] = R_vel_share.get()
             x_hat_old[2] = 0  # Romi has not travelled any linear distance yet
-            x_hat_old[3] = y_measured[2]  # yaw rate is already known from output vector
+            x_hat_old[3] = y_measured[2]  # yaw angle is already known from output vector
             state = 2
         elif state == 2:
             # print("State 2")
             curr_time = ticks_ms()
-
             if ticks_diff(curr_time, old_time) >= 50:
                 old_time = curr_time
+                new_time_meas = ticks_us()
                 # Run observer and update equations
                 x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
                 y_hat = np.dot(C, x_hat_old)
+                dist_traveled = x_hat_new[2]
+                print(f"distance: {dist_traveled}")
+                dist_traveled_share.put(dist_traveled)
+                IMU_time_share.put(ticks_us())
             y_measured[0] = L_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[1] = R_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[2] = IMU.readEulerAngles()[0]  # update yaw angle
@@ -298,7 +303,7 @@ def IMU_OP(shares):
             # print(f"Angular velocity: {y_measured[3]}")
             # print(f"Yaw rate: {y_measured[3]}")
             yaw_rate_share.put(y_measured[3])
-
+                        
             # update set points for motor controllers
             L_vel_share.put(x_hat_new[0])
             R_vel_share.put(x_hat_new[1])
@@ -499,8 +504,8 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
-                l_eff = 10
-                r_eff = -10
+                l_eff = 3
+                r_eff = 3
                 L_lin_speed.put(l_eff)
                 R_lin_speed.put(r_eff)
                 # state = 1
@@ -561,7 +566,7 @@ def run_UI(shares):
         elif state == 5:  # Stop collecting data, set flags for data collection task
             # print("I made it to state 3!")
             # print("Now:", ticks_ms(), "diff:", ticks_diff(ticks_ms(), test_start_time))
-            if ticks_diff(ticks_ms(), test_start_time) >= 2500:  # stops test after ~ 2.5 seconds
+            if ticks_diff(ticks_ms(), test_start_time) >= 5000:  # stops test after ~ 2.5 seconds
                 # print("state 3 exit")
                 r_en = 0
                 l_en = 0
@@ -589,7 +594,7 @@ def queue_to_list(q):
 def collect_data(shares):
     # print("collect data")
     state = 0
-    R_EFF, L_EFF, RIGHT_POS, RIGHT_VEL, R_TIME, LEFT_POS, LEFT_VEL, L_TIME, yaw_angle, yaw_rate, run, print_out = shares
+    R_EFF, L_EFF, RIGHT_POS, RIGHT_VEL, R_TIME, LEFT_POS, LEFT_VEL, L_TIME, yaw_angle, yaw_rate, IMU_time_share, dist_traveled_share, run, print_out = shares
     while True:
         # print([x.get() for x in shares])
         # print("COLLECT DATA loop")
@@ -609,9 +614,16 @@ def collect_data(shares):
             LEFT_VEL_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Velocity share is initialized as f
             L_TIME_Q = cqueue.IntQueue(QUEUE_SIZE)  # Time share is initialized as I
 
+            # IMU Queues
+            IMU_TIME_Q = cqueue.IntQueue(QUEUE_SIZE)  # Time share is initialized as I
+
+            # X_Hat vector from IMU task
+            S_Q = cqueue.FloatQueue(QUEUE_SIZE)
+            
+                
             # Y vector output queues from IMU task
-            S_L_Q = cqueue.FloatQueue(QUEUE_SIZE)
-            S_R_Q = cqueue.FloatQueue(QUEUE_SIZE)
+            # S_L_Q = cqueue.FloatQueue(QUEUE_SIZE)
+            # S_R_Q = cqueue.FloatQueue(QUEUE_SIZE)
             Psi_Q = cqueue.FloatQueue(QUEUE_SIZE)
             Psi_dot_Q = cqueue.FloatQueue(QUEUE_SIZE)
 
@@ -648,6 +660,9 @@ def collect_data(shares):
                 # Put IMU task shares
                 # S_L_Q.put()
                 # S_R_Q.put()
+                IMU_TIME_Q.put(IMU_time_share.get())
+                S_Q.put(dist_traveled_share.get())
+                
                 Psi_Q.put(yaw_angle.get())
                 Psi_dot_Q.put(yaw_rate.get())
 
@@ -683,20 +698,23 @@ def collect_data(shares):
 
             # IMU task output:
 
-            uart.write(f"Euler Angles output")
+            uart.write("Euler Angles output\n")
             print("Got to the Euler angle write in collection task")
             while Psi_Q.any():
                 size += 1
-                uart.write(f"{R_TIME_Q.get()}, {Psi_Q.get()}\r\n")
+                uart.write(f"{IMU_TIME_Q.get()}, {Psi_Q.get()}, {Psi_dot_Q.get()}\r\n")
                 sleep_ms(5)
-            uart.write(f"Yaw rate output")
-            while Psi_dot_Q.any():
-                size += 1
-                uart.write(f"{R_TIME_Q.get()}, {Psi_dot_Q.get()}\r\n")
-                sleep_ms(5)
-            state = 1
-            uart.write(f"Number of data points: {size}\r\n")
+            # uart.write(f"Yaw rate output")
+            # while Psi_dot_Q.any():
+            #     size += 1
+            #     uart.write(f"{R_TIME_Q.get()}, {Psi_dot_Q.get()}\r\n")
+            #     sleep_ms(5)
+            # state = 1
+            # uart.write(f"Number of data points: {size}\r\n")
             print("Done sending data")
+            run.put(0)
+            print_out.put(0)
+            state = 1
         yield state
 
 
@@ -754,6 +772,9 @@ if __name__ == "__main__":
     wheel_diff = task_share.Share('f', thread_protect=False, name="wheel speed diff")
     yaw_angle_share = task_share.Share('f', thread_protect=False, name="yaw angle")
     yaw_rate_share = task_share.Share('f', thread_protect=False, name="yaw rate")
+    dist_traveled_share = task_share.Share('f', thread_protect=False, name="Distance traveled")
+    IMU_time_share = task_share.Share('I', thread_protect=False, name="IMU time")
+    
 
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
@@ -786,7 +807,7 @@ if __name__ == "__main__":
     task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=100,
                                     profile=True, trace=True, shares=(
             R_lin_spd, L_lin_spd, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share,
-            yaw_angle_share, yaw_rate_share, run,
+            yaw_angle_share, yaw_rate_share, IMU_time_share, dist_traveled_share, run,
             print_out))
 
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=2000,
@@ -794,10 +815,10 @@ if __name__ == "__main__":
     task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=5, period=50,
                                  profile=True, trace=True,
                                  shares=(calib_black, calib_white, line_follow, L_lin_spd, R_lin_spd, wheel_diff))
-    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=2, period=200,
+    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=2, period=100,
                                        profile=True, trace=True, shares=(
             L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, yaw_angle_share,
-            yaw_rate_share))
+            yaw_rate_share, dist_traveled_share, IMU_time_share))
 
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
