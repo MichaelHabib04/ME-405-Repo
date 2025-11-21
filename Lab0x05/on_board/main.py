@@ -280,16 +280,15 @@ def IMU_OP(shares):
         elif state == 2:
             # print("State 2")
             curr_time = ticks_us()
-            if ticks_diff(curr_time, old_time) >= 50000:
-                old_time = curr_time
-                new_time_meas = ticks_us()
-                # Run observer and update equations
-                x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
-                y_hat = np.dot(C, x_hat_old)
-                dist_traveled = x_hat_new[2]
-                print(f"distance: {dist_traveled}")
-                dist_traveled_share.put(dist_traveled)
-                IMU_time_share.put(ticks_diff(new_time_meas, test_start_time.get()))
+            old_time = curr_time
+            new_time_meas = ticks_us()
+            # Run observer and update equations
+            x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
+            y_hat = np.dot(C, x_hat_old)
+            dist_traveled = x_hat_new[2]
+            print(f"estimator distance: {dist_traveled}")
+            dist_traveled_share.put(dist_traveled)
+            IMU_time_share.put(ticks_diff(new_time_meas, test_start_time.get()))
             y_measured[0] = L_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[1] = R_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[2] = IMU.readEulerAngles()[0]  # update yaw angle
@@ -298,6 +297,7 @@ def IMU_OP(shares):
             v_right = R_voltage_share.get()
             u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
             yaw_angle_share.put(y_measured[2])
+            print(f"left pos share: {y_measured[0]}")
             # print(f"left wheel s: {y_measured[0]}")
             # print(f"Yaw Angles from IMU: {y_measured[2]}")
             # print(f"Angular velocity: {y_measured[3]}")
@@ -835,7 +835,7 @@ if __name__ == "__main__":
     cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
     # cotask.task_list.append(task_IR_sensor)
-    # cotask.task_list.append(task_state_estimator)
+    cotask.task_list.append(task_state_estimator)
 
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started

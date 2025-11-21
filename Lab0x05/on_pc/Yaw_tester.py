@@ -74,7 +74,7 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
 
     # ser.write(b"r\r\n")
     ser.write(b"t\r\n")
-    sleep(3)
+    sleep(12)
     ser.write(b"z\r\n")
     
     
