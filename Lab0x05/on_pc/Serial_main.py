@@ -40,18 +40,18 @@ def save_csv(filename, data_lines):
 
 
 with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
-    print("Opening serial port")
-    sleep(0.5)
+    # print("Opening serial port")
+    # sleep(0.5)
 
-    print("Sending Ctrl-C to break into REPL...")
-    ser.write(b"\x03")  # Ctrl-C
-    sleep(0.5)
+    # print("Sending Ctrl-C to break into REPL...")
+    # ser.write(b"\x03")  # Ctrl-C
+    # sleep(0.5)
 
-    print("Sending Ctrl-D to soft reboot and run main.py...")
-    ser.write(b"\x04")  # Ctrl-D
-    sleep(1)
+    # print("Sending Ctrl-D to soft reboot and run main.py...")
+    # ser.write(b"\x04")  # Ctrl-D
+    # sleep(1)
 
-    print("Flushing serial port")
+    # print("Flushing serial port")
     while ser.in_waiting:
         ser.read()
         
@@ -59,17 +59,17 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     print("Sending command to start data collection")
 
 
-    ser.write(b"r\r\n")
-    sleep(.5)
-    ser.write(b"s\r\n")
-    sleep(5)
-    ser.write(b"z\r\n")
-    sleep(2)
+    # ser.write(b"r\r\n")
+    # sleep(.5)
+    # ser.write(b"s\r\n")
+    # sleep(5)
+    # ser.write(b"z\r\n")
+    # sleep(2)
 
     print("Flushing serial port")
     while ser.in_waiting:
         ser.read()
-    ser.write(b"r\r\n")
+    # ser.write(b"r\r\n")
     ser.write(b"s\r\n")
     sleep(5)
     ser.write(b"z\r\n")
@@ -91,8 +91,10 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     read_left = False
     while True:
         line = ser.readline().decode(errors="replace").strip()
+        
         # if not line:
         #     continue
+        print(f"line: {line}")
         if line.startswith("RIGHT MOTOR"):
             print("Reading right motor data...")
             read_right = True
@@ -109,21 +111,21 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
                 left_motor_data.append(line)
             else:
                 print("Data collection complete")
-                read_left = True
+                read_left = False
                 break
 
 
-with open("right_motor.csv", 'w') as file:
+with open("right_motor_100.csv", 'w') as file:
     file.seek(0)
     file.truncate()
-    save_csv("right_motor.csv", right_motor_data)
-with open("left_motor.csv", 'w') as file:
+    save_csv("right_motor_100.csv", right_motor_data)
+with open("left_motor_100.csv", 'w') as file:
     file.seek(0)
     file.truncate()
-    save_csv("left_motor.csv", left_motor_data)
+    save_csv("left_motor_100.csv", left_motor_data)
 
-data_right = pd.read_csv("right_motor.csv", header=None, names=["time", "velocity"])
-data_left = pd.read_csv("left_motor.csv", header=None, names=["time", "velocity"])
+data_right = pd.read_csv("right_motor_100.csv", header=None, names=["time", "velocity"])
+data_left = pd.read_csv("left_motor_100.csv", header=None, names=["time", "velocity"])
 
 plt.figure()
 plt.plot(data_left["time"], data_left["velocity"])

@@ -44,14 +44,14 @@ R_t_UI = 0
 
 PA8 = Pin(Pin.cpu.A8, mode=Pin.OUT_PP)  # Timer1_Channel1: Encoder A left
 PA9 = Pin(Pin.cpu.A9, mode=Pin.OUT_PP)  # Timer1_Channel2: Encoder B left
-timLeft = Timer(1, freq=100)
+timLeft = Timer(1, prescaler=0, period = 0xFFFF)
 ch1Left = timLeft.channel(1, Timer.ENC_AB, pin=PA8)
 ch2Left = timLeft.channel(2, Timer.ENC_AB, pin=PA9)
 left_encoder = Encoder(timLeft, ch1Left, ch2Left)
 
 PB4 = Pin(Pin.cpu.B4, mode=Pin.OUT_PP)  # Timer3_Channel1: Encoder A right
 PB5 = Pin(Pin.cpu.B5, mode=Pin.OUT_PP)  # Timer3_Channel2: Encoder B right
-timRight = Timer(3, freq=100)
+timRight = Timer(3, prescaler=0, period = 0xFFFF)
 ch1Right = timRight.channel(1, Timer.ENC_AB, pin=PB4)
 ch2Right = timRight.channel(2, Timer.ENC_AB, pin=PB5)
 right_encoder = Encoder(timRight, ch1Right, ch2Right)
@@ -72,7 +72,7 @@ def left_ops(shares):
     # print("LEFT OPS")
     state = 0
     # params: L dir, L eff, L en, L pos, L vel, L time
-    L_dir, L_eff, L_en, L_pos, L_vel, L_time = shares
+    L_dir, L_eff, L_en, L_pos, L_vel, L_time, test_start_time_share = shares
     global L_prev_dir, L_prev_eff, L_prev_en, L_t_start
     # State 0: init
     while True:
@@ -106,7 +106,7 @@ def left_ops(shares):
                 mot_left.set_effort(L_eff.get())
             L_pos.put(left_encoder.get_position())
             L_vel.put(left_encoder.get_velocity())
-            L_time.put(ticks_diff(L_t_new, L_t_start))
+            L_time.put(ticks_diff(L_t_new, test_start_time_share.get()))
             # print(L_pos.get(), L_vel.get(), L_time.get())
         yield 1
 
@@ -114,7 +114,7 @@ def right_ops(shares):
     # print("RIGHT OPS")
     state = 0
     # params: R dir, R eff, R en, R pos, R vel, R time
-    R_dir, R_eff, R_en, R_pos, R_vel, R_time = shares
+    R_dir, R_eff, R_en, R_pos, R_vel, R_time, test_start_time_share = shares
     global R_prev_dir, R_prev_eff, R_prev_en, R_t_start
     # State 0: init
     while True:
@@ -149,7 +149,7 @@ def right_ops(shares):
                 mot_right.set_effort(R_eff.get())
             R_pos.put(right_encoder.get_position())
             R_vel.put(right_encoder.get_velocity())
-            R_time.put(ticks_diff(R_t_new, R_t_start))
+            R_time.put(ticks_diff(R_t_new, test_start_time_share.get()))
             # print(R_pos.get(), R_vel.get(), R_time.get())
         yield 1
 
@@ -180,7 +180,7 @@ Motor step response test:
 
 
 def run_UI(shares):
-    L_eff, L_en, R_eff, R_en, Run, Print_out = shares
+    L_eff, L_en, R_eff, R_en, Run, Print_out, test_start_time_share = shares
     global state, l_dir, l_eff, l_en, r_dir, r_eff, r_en, test_start_time
     state = 0
     while True:
@@ -234,7 +234,10 @@ def run_UI(shares):
                 uart.write("Left motor effort: " , l_eff, "\nRight motor effort: ", r_eff)
                 state = 1
             elif char_in =="b":
-                print(state)
+                r_eff = 0
+                l_eff = 0
+                R_eff_share.put(r_eff)
+                L_eff_share.put(l_eff)
                 state = 1
             elif char_in == "z":
                 # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
@@ -248,10 +251,14 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
+                r_eff = 100
                 l_eff = r_eff
                 L_eff.put(l_eff)
+                R_eff.put(r_eff)
                 Run.put(1) # Indicates start to data collection
                 test_start_time = ticks_ms() # Record start time of test
+                time_us = ticks_us()
+                test_start_time_share.put(time_us)
                 state = 3
             else:
                 state = 1
@@ -375,7 +382,7 @@ def collect_data(shares):
                 sleep_ms(5)
             # uart.write(f"LEFT MOTOR: EFFORT =  {L_EFF.get()}\r\n")
             sleep_ms(10)
-            uart.write(f"LEFT MOTOR\r\n")
+            uart.write("LEFT MOTOR\r\n")
             while L_TIME_Q.any():
                 uart.write(f"{L_TIME_Q.get()}, {LEFT_VEL_Q.get()}\r\n")
                 sleep_ms(5)
@@ -411,6 +418,7 @@ if __name__ == "__main__":
     R_time_share = task_share.Share('I', thread_protect=False, name="R time")
     run = task_share.Share('H', thread_protect=False, name="run")
     print_out = task_share.Share('H', thread_protect=False, name="print out")
+    test_start_time_share = task_share.Share('I', thread_protect=False, name="test start time")
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
     # R_time_queue = task_share.Queue('I', 100, name="R time")
@@ -427,15 +435,15 @@ if __name__ == "__main__":
 
     task_left_ops = cotask.Task(left_ops, name="Left ops", priority=3, period=50,
                                 profile=False, trace=False, shares=(L_dir_share,
-                                                                    L_eff_share, L_en_share, L_pos_share, L_vel_share, L_time_share))
+                                                                    L_eff_share, L_en_share, L_pos_share, L_vel_share, L_time_share, test_start_time_share))
     task_right_ops = cotask.Task(right_ops, name="Right ops", priority=4, period=50,
                                  profile=False, trace=False, shares=(R_dir_share,
-                                                                     R_eff_share, R_en_share, R_pos_share, R_vel_share, R_time_share))
+                                                                     R_eff_share, R_en_share, R_pos_share, R_vel_share, R_time_share, test_start_time_share))
     # task_dumb_ui = cotask.Task(dumb_ui, name="Dumb UI", priority=1, period=10,
     #                             profile=False, trace=False, shares=(L_eff_share, R_eff_share))
 
     task_ui = cotask.Task(run_UI, name="UI", priority=0, period=60,
-                          profile=False, trace=False, shares=(L_eff_share, L_en_share, R_eff_share, R_en_share, run, print_out))
+                          profile=False, trace=False, shares=(L_eff_share, L_en_share, R_eff_share, R_en_share, run, print_out, test_start_time_share))
 
     task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=2, period=50,
                                 profile=False, trace=False, shares=(R_eff_share, L_eff_share, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share, run, print_out))
