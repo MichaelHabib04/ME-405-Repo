@@ -196,15 +196,16 @@ def IMU_OP(shares):
     y_measured = np.array(np.zeros(4).reshape(4, ))
     y_hat = np.array(np.zeros(4).reshape(4, ))
     A_d = np.array(
-        [0.453706, 0.446968, 0.173821, 0.000000, 0.446968, 0.453706, 0.173821, -0.000000, 0.255410, 0.255410, 0.106064,
-         -0.000000, -0.000000, -0.000000, 0.000000, 1.000000]).reshape((4, 4))
-    B_d = np.array(
-        [1.626818, 1.048962, 0.407929, 0.000000, 1.048962, 1.626818, 0.407929, -0.000000, -0.127705, -0.127705,
-         0.446968, 0.000000, -0.127705, -0.127705, 0.446968, 0.000000, -0.000000, 0.000000, -0.000000, 0.000000,
-         -1.800642, 1.800642, 0.000000, 0.050000]).reshape((4, 6))
+        [0.499445, 0.499445, 0.001942, 0.002727, 0.499445, 0.499445, 0.001942, -0.002727, 0.285397, 0.285397, 0.001110,
+         -0.000000,
+         -0.000000, -0.000000, 0.000000, 1.000000]).reshape((4, 4))
+    B_d = np.array([
+        0.143168, 0.140021, 0.000545, 0.000765, 0.140021, 0.143168, 0.000545, -0.000765, -0.142699, -0.142699, 0.499445,
+        0.000000, -0.142699, -0.142699, 0.499445, 0.000000, -0.000000, 0.000000, -0.000000,
+        0.000000, -2.012050, 2.012050, 0.000000, 0.022074]).reshape((4, 6))
     C = np.array(
-        [0.000000, 0.000000, 0.000000, -0.248227, 0.000000, 0.000000, 0.000000, 0.248227, 1.000000, 1.000000, 0.000000,
-         0.000000, -70.500000, 70.500000, 1.000000, 0.000000]).reshape((4, 4))
+        [0.000000, 0.000000, 0.000000, -0.248227, 0.000000, 0.000000, 0.000000, 0.248227, 1.000000,
+         1.000000, 0.000000, 0.000000, -70.500000, 70.500000, 1.000000, 0.000000]).reshape((4, 4))
 
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_us()
@@ -287,12 +288,14 @@ def IMU_OP(shares):
             # print(f"estimator distance: {dist_traveled}")
             dist_traveled_share.put(dist_traveled)
             IMU_time_share.put(ticks_diff(new_time_meas, test_start_time.get()))
-           
+            y_measured[0] = L_pos_share.get() * .153  # in encoder counts, converted to mm
+            y_measured[1] = R_pos_share.get() * .153  # in encoder counts, converted to mm
+            y_measured[2] = IMU.readEulerAngles()[0]  # update yaw angle
+            y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate
             v_left = L_voltage_share.get()  # pwm converted to V in ops tasks
             v_right = R_voltage_share.get()
             u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
-           
-            yaw_rate_share.put(u_aug[5])
+            yaw_angle_share.put(y_measured[2])
             print(f"left pos share: {y_measured[0]}, right pos share: {y_measured[1]}, estimator left distance: {dist_traveled}")
             # print(f"left wheel s: {y_measured[0]}")
             # print(f"Yaw Angles from IMU: {y_measured[2]}")
@@ -301,9 +304,8 @@ def IMU_OP(shares):
             yaw_rate_share.put(y_measured[3])
             # print(f"U_AUG: {u_aug}")
             # update set points for motor controllers
-            # Setpoint for motors is defined in mm/s, x_hat is rotational speed in rad/s
-            L_vel_share.put(x_hat_new[0]*35) # rad/s converted to mm/s 
-            R_vel_share.put(x_hat_new[1]*35) # rad/s converted to mm/s
+            L_vel_share.put(x_hat_new[0])
+            R_vel_share.put(x_hat_new[1])
             state = 2
         yield state
 
@@ -501,8 +503,8 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
-                l_lin_spd = 50
-                r_lin_spd = 50
+                l_lin_spd = 80
+                r_lin_spd = -80
                 L_lin_speed.put(l_lin_spd)
                 R_lin_speed.put(r_lin_spd)
                 # state = 1
@@ -789,22 +791,22 @@ if __name__ == "__main__":
     # of memory after a while and quit. Therefore, use tracing only for
     # debugging and set trace to False when it's not needed2
 
-    task_left_ops = cotask.Task(left_ops, name="Left ops", priority=3, period=50,
+    task_left_ops = cotask.Task(left_ops, name="Left ops", priority=3, period=20,
                                 profile=True, trace=True, shares=(L_lin_spd, L_en_share, L_pos_share, L_vel_share,
                                                                   L_time_share, wheel_diff, line_follow,
                                                                   L_voltage_share))
-    task_right_ops = cotask.Task(right_ops, name="Right ops", priority=4, period=50,
+    task_right_ops = cotask.Task(right_ops, name="Right ops", priority=4, period=20,
                                  profile=True, trace=True, shares=(R_lin_spd, R_en_share, R_pos_share, R_vel_share,
                                                                    R_time_share, wheel_diff, line_follow,
                                                                    R_voltage_share))
     # task_dumb_ui = cotask.Task(dumb_ui, name="Dumb UI", priority=1, period=10,
     #                             profile=True, trace=True, shares=(L_eff_share, R_eff_share))
 
-    task_ui = cotask.Task(run_UI, name="UI", priority=1, period=50,
+    task_ui = cotask.Task(run_UI, name="UI", priority=1, period=100,
                           profile=True, trace=True,
                           shares=(L_lin_spd, L_en_share, R_lin_spd, R_en_share, run, print_out, time_start_share))
 
-    task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=50,
+    task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=20,
                                     profile=True, trace=True, shares=(
             R_lin_spd, L_lin_spd, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share,
             yaw_angle_share, yaw_rate_share, IMU_time_share, dist_traveled_share, run,
@@ -812,10 +814,10 @@ if __name__ == "__main__":
 
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=2000,
                                     profile=True, trace=True, shares=(bat_share, bat_flag))
-    task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=5, period=50,
+    task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=0, period=50,
                                  profile=True, trace=True,
                                  shares=(calib_black, calib_white, line_follow, L_lin_spd, R_lin_spd, wheel_diff))
-    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=2, period=50,
+    task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=10, period=50,
                                        profile=True, trace=True, shares=(
             L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, yaw_angle_share,
             yaw_rate_share, dist_traveled_share, IMU_time_share, time_start_share))

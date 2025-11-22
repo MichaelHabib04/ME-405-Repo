@@ -9,7 +9,7 @@ times = []
 data = []
 
 # ComPort = "/dev/tty.usbmodem2058397458562"   # For MacOS, will need to change if board is reflashed
-ComPort = "COM5" #COM13, COM5 for Katherine
+ComPort = "COM13" #COM13, COM5 for Katherine
 
 
 # If ComPort is different on Windows, add here, and then comment/uncomment which one to use
@@ -97,7 +97,7 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
         #     yaw_data, _ = read_IMU_data(ser)
         #     break
 
-print("finished reading data")
+    print("finished reading data")
 with open("Euler_Angle.csv", 'w') as file:
     file.seek(0)
     file.truncate()
