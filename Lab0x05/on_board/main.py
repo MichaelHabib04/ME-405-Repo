@@ -182,8 +182,8 @@ IMU = IMU_I2C(i2c, IMU_addr)  # Create IMU_I2C object
 
 
 def IMU_OP(shares):
-    L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share,\
-    yaw_angle_share, yaw_rate_share, dist_traveled_share, IMU_time_share, test_start_time = shares
+    L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, \
+        yaw_angle_share, yaw_rate_share, dist_traveled_share, IMU_time_share, test_start_time = shares
     heading_offset = 0
     robot_width = 141  # mm
     wheel_radius = 35  # mm
@@ -195,9 +195,16 @@ def IMU_OP(shares):
     u_aug = np.array(np.zeros(6).reshape(6, ))
     y_measured = np.array(np.zeros(4).reshape(4, ))
     y_hat = np.array(np.zeros(4).reshape(4, ))
-    A_d = np.array([0.453706,0.446968,0.173821,0.000000,0.446968,0.453706,0.173821,-0.000000,0.255410,0.255410,0.106064,-0.000000,-0.000000,-0.000000,0.000000,1.000000]).reshape((4, 4))
-    B_d = np.array([1.626818,1.048962,0.407929,0.000000,1.048962,1.626818,0.407929,-0.000000,-0.127705,-0.127705,0.446968,0.000000,-0.127705,-0.127705,0.446968,0.000000,-0.000000,0.000000,-0.000000,0.000000,-1.800642,1.800642,0.000000,0.050000]).reshape((4, 6))
-    C = np.array([0.000000,0.000000,0.000000,-0.248227,0.000000,0.000000,0.000000,0.248227,1.000000,1.000000,0.000000,0.000000,-70.500000,70.500000,1.000000,0.000000]).reshape((4, 4))
+    A_d = np.array(
+        [0.453706, 0.446968, 0.173821, 0.000000, 0.446968, 0.453706, 0.173821, -0.000000, 0.255410, 0.255410, 0.106064,
+         -0.000000, -0.000000, -0.000000, 0.000000, 1.000000]).reshape((4, 4))
+    B_d = np.array(
+        [1.626818, 1.048962, 0.407929, 0.000000, 1.048962, 1.626818, 0.407929, -0.000000, -0.127705, -0.127705,
+         0.446968, 0.000000, -0.127705, -0.127705, 0.446968, 0.000000, -0.000000, 0.000000, -0.000000, 0.000000,
+         -1.800642, 1.800642, 0.000000, 0.050000]).reshape((4, 6))
+    C = np.array(
+        [0.000000, 0.000000, 0.000000, -0.248227, 0.000000, 0.000000, 0.000000, 0.248227, 1.000000, 1.000000, 0.000000,
+         0.000000, -70.500000, 70.500000, 1.000000, 0.000000]).reshape((4, 4))
 
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_us()
@@ -263,8 +270,8 @@ def IMU_OP(shares):
             u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
 
             old_time = ticks_us()
-            x_hat_old[0] = L_vel_share.get()
-            x_hat_old[1] = R_vel_share.get()
+            x_hat_old[0] = L_vel_share.get() / 35  # converted from mm/s to radians per second
+            x_hat_old[1] = R_vel_share.get() / 35  # converted from mm/s to radians per second
             x_hat_old[2] = 0  # Romi has not travelled any linear distance yet
             x_hat_old[3] = y_measured[2]  # yaw angle is already known from output vector
             state = 2
@@ -274,10 +281,11 @@ def IMU_OP(shares):
             old_time = curr_time
             new_time_meas = ticks_us()
             # Run observer and update equations
+            print(f"LINE 277{x_hat_new}")
             x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
             y_hat = np.dot(C, x_hat_old)
             dist_traveled = x_hat_new[2]
-            print(f"estimator distance: {dist_traveled}")
+            # print(f"estimator distance: {dist_traveled}")
             dist_traveled_share.put(dist_traveled)
             IMU_time_share.put(ticks_diff(new_time_meas, test_start_time.get()))
             y_measured[0] = L_pos_share.get() * .153  # in encoder counts, converted to mm
@@ -288,13 +296,13 @@ def IMU_OP(shares):
             v_right = R_voltage_share.get()
             u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
             yaw_angle_share.put(y_measured[2])
-            print(f"left pos share: {y_measured[0]}")
+            print(f"left pos share: {y_measured[0]}, right pos share: {y_measured[1]}, estimator left distance: {dist_traveled}")
             # print(f"left wheel s: {y_measured[0]}")
             # print(f"Yaw Angles from IMU: {y_measured[2]}")
             # print(f"Angular velocity: {y_measured[3]}")
             # print(f"Yaw rate: {y_measured[3]}")
             yaw_rate_share.put(y_measured[3])
-                        
+
             # update set points for motor controllers
             L_vel_share.put(x_hat_new[0])
             R_vel_share.put(x_hat_new[1])
@@ -523,7 +531,7 @@ def run_UI(shares):
                 L_lin_speed.put(l_lin_spd)
                 Run.put(1)  # Indicates start to data collection
                 test_start_time = ticks_ms()  # Record start time of test
-                
+
                 state = 3
             elif char_in == "i":  # run black calibration sequence for IR sensor
                 calib_black.put(1)
@@ -613,8 +621,7 @@ def collect_data(shares):
 
             # X_Hat vector from IMU task
             S_Q = cqueue.FloatQueue(QUEUE_SIZE)
-            
-                
+
             # Y vector output queues from IMU task
             # S_L_Q = cqueue.FloatQueue(QUEUE_SIZE)
             # S_R_Q = cqueue.FloatQueue(QUEUE_SIZE)
@@ -656,7 +663,7 @@ def collect_data(shares):
                 # S_R_Q.put()
                 IMU_TIME_Q.put(IMU_time_share.get())
                 S_Q.put(dist_traveled_share.get())
-                
+
                 Psi_Q.put(yaw_angle.get())
                 Psi_dot_Q.put(yaw_rate.get())
 
@@ -769,7 +776,6 @@ if __name__ == "__main__":
     dist_traveled_share = task_share.Share('f', thread_protect=False, name="Distance traveled")
     IMU_time_share = task_share.Share('I', thread_protect=False, name="IMU time")
     time_start_share = task_share.Share('I', thread_protect=False, name="time start")
-    
 
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
