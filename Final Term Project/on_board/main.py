@@ -169,8 +169,10 @@ def bump_sensors(shares):
         if (not PB12.value() or not PB13.value()): # This condition being true indicates one of the bump sensor activated
             r_velocity.put(0)
             l_velocity.put(0)
+            sleep_ms(10)
             mot_left.disable()
             mot_right.disable()
+            line_follow.put(0)
             print("OW")
     
         yield state
@@ -961,6 +963,3 @@ if __name__ == "__main__":
     print('\n' + str(cotask.task_list))
     print(task_share.show_all())
     print('')
-
-
-
