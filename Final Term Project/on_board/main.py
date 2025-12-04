@@ -71,14 +71,9 @@ mot_right = motor_driver(Pin.cpu.A6, Pin.cpu.A1, Pin.cpu.A0, Timer(16, freq=6000
 
 # Create Motor Controllers
 # CONTROLLER SETPOINT IS IN MM/S
-# cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
-#                                      v_nom=9, threshold=5, K3=.06687)
-# cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
-#                                       v_nom=9, threshold=5, K3=.06841)
-
-cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=10, min_sat=-100, max_sat=100, t_init=0,
+cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
                                      v_nom=9, threshold=5, K3=.06687)
-cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=10, min_sat=-100, max_sat=100, t_init=0,
+cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
                                       v_nom=9, threshold=5, K3=.06841)
 
 """! Battery Read Task setup !"""
@@ -101,7 +96,7 @@ ir_sensor_array = sensor_array(channels, 4, 8)
 # Setup IR Sensor controller
 centroid_set_point = 0
 
-ir_controller = IRController(centroid_set_point, 0 , 0, K3=1, Kp=1, Ki=.5)
+ir_controller = IRController(centroid_set_point, 0 , 0, K3=1, Kp=1, Ki=0)
 
 """! Setup for IMU !"""
 
@@ -167,6 +162,28 @@ PB13 = Pin(Pin.cpu.B13, mode=Pin.IN, pull=Pin.PULL_UP) # For Left Bump Sensor
     
     !"""
 
+def pathing(shares):
+    l_velocity, r_velocity, x_position, y_position, distance_traveled_share, start_pathing, follower_on = shares
+    state = 0
+    while True:
+        if state == 0:
+            #print(start_pathing.get())
+            if start_pathing.get():
+                state = 1
+        
+        elif state == 1:
+            # centroid_set_point = -2
+            follower_on.put(1)
+            l_velocity.put(200)
+            r_velocity.put(200)
+            if x_position > 750:
+                state = 2
+        elif state == 2:
+            l_velocity.put(0)
+            r_velocity.put(0)
+            line_follow.put(0)
+        yield state
+
 def bump_sensors(shares):
     r_velocity, l_velocity = shares
     state = 1
@@ -188,6 +205,7 @@ def IR_sensor(shares):
     state = 0
     while True:
         # print("IR TASK CALLED")
+        gc.collect()
         if state == 0:  # wait for a flag to be set
             if calib_black.get() == 1:
                 state = 1
@@ -228,7 +246,7 @@ def IR_sensor(shares):
             
             # split the difference in wheel speeds evenly between the two wheels
             wheel_diff.put(scaled_speed_diff)
-            # print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {controloutput_diff}, scaled speed diff: {scaled_speed_diff}")
+            print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {controloutput_diff}, scaled speed diff: {scaled_speed_diff}")
             # print(wheel_speed_diff)
         yield state
 
@@ -259,8 +277,8 @@ def IMU_OP(shares):
     y_hat = np.array(np.zeros(4).reshape(4, ))
     
     # Set initial global coordinates
-    global_coords = [100, 800]
-    est_global_coords = [100, 800]
+    global_coords = [0, 0]
+    est_global_coords = [0, 0]
 
     
     A_d = np.array(
@@ -279,6 +297,7 @@ def IMU_OP(shares):
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_us()
     while True:
+        gc.collect()
         if state == 0:
             cal_file = "IMU_cal.txt"
             os_files = os.listdir()
@@ -389,9 +408,11 @@ def IMU_OP(shares):
             x_hat_old = x_hat_new
             
             S_diff = x_hat_new[2] - dist_traveled_old
-            global_coords[0] = global_coords[0] + S_diff*math.cos(-1 * y_measured[2])
-            
-            global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
+            global_coords[0] = global_coords[0] + S_diff*math.cos(-1* y_measured[2])
+            if y_measured[2] >= 3.14:
+                global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
+            else:
+                global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
             
             # print(f"Angle: {-1* y_measured[3]} sin value: {math.sin(-1* y_measured[3])} cos value: {math.cos(-1* y_measured[3])}" )
             # print(f"Psi: {y_measured[3]}, S: {x_hat_new[2]}")
@@ -399,12 +420,14 @@ def IMU_OP(shares):
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
             
-            print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
+            # print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
             # use estimated states for the  position calculator
             est_global_coords[0] = est_global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
-            est_global_coords[1] = est_global_coords[1] - S_diff * math.sin(-1 * y_hat[2])
+            if y_hat[2] >= 3.14:
+                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+            else:
+                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
             # print(f"est_out: Sl {y_hat[0]} Sr {y_hat[1]} psi {y_hat[2]} psi_dot {y_hat[3]} X: {est_global_coords[0]}, Y: {est_global_coords[1]}")
-            # print(f"X: {est_global_coords[0]} Y:{est_global_coords[1]}")
             # print(f"x-coord: {est_global_coords[0]}, y-coord: {est_global_coords[1]}")
 
             x_position.get()
@@ -480,6 +503,7 @@ def right_ops(shares):
     # State 0: init
     while True:
         # print("RIGHT OPS LOOP")
+        gc.collect()
         if state == 0:
             mot_right.enable()
             right_encoder.zero()
@@ -529,6 +553,7 @@ UI Task guide:
     z = print left queues
     x = print right queues
     t = configure for testing
+    m = start pathing
 
 Motor step response test:
     Turns both motors off
@@ -540,9 +565,9 @@ Motor step response test:
 
 
 def run_UI(shares):
-    L_lin_speed, L_en, R_lin_speed, R_en, Run, Print_out, test_start_time_share = shares
+    L_lin_speed, L_en, R_lin_speed, R_en, Run, Print_out, test_start_time_share, start_pathing = shares
     state = 0
-    print("UI")
+    uart.write("UI")
     while True:
         if state == 0:  # init state
             # Init messenger variables
@@ -559,8 +584,9 @@ def run_UI(shares):
             if uart.any():
                 uart.read()
         elif state == 1:
+            uart.write("Here!")
             if uart.any():  # wait for any character
-                print("Yay")
+                uart.write("Yay")
                 char_in = uart.read(1).decode()
                 state = 2
         elif state == 2:  # decode character
@@ -611,8 +637,8 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
-                l_lin_spd = 150
-                r_lin_spd = 150
+                l_lin_spd = 200
+                r_lin_spd = 200
                 L_lin_speed.put(l_lin_spd)
                 R_lin_speed.put(r_lin_spd)
                 # state = 1
@@ -659,6 +685,10 @@ def run_UI(shares):
                 R_en.put(r_en)
 
                 line_follow.put(1)
+                state = 1
+            elif char_in == "m":
+                uart.write("Reached")
+                start_pathing.put(1)
                 state = 1
 
             else:
@@ -874,11 +904,11 @@ if __name__ == "__main__":
     R_time_share = task_share.Share('I', thread_protect=False, name="R time")
     run = task_share.Share('H', thread_protect=False, name="run")
     print_out = task_share.Share('H', thread_protect=False, name="print out")
-    bat_share = task_share.Share('f', thread_protect=False, name="print out")
-    bat_flag = task_share.Share('H', thread_protect=False, name="print out")
-    calib_black = task_share.Share('H', thread_protect=False, name="print out")
-    calib_white = task_share.Share('H', thread_protect=False, name="print out")
-    line_follow = task_share.Share('H', thread_protect=False, name="print out")
+    bat_share = task_share.Share('f', thread_protect=False, name="bat share")
+    bat_flag = task_share.Share('H', thread_protect=False, name="bat flag")
+    calib_black = task_share.Share('H', thread_protect=False, name="calib black")
+    calib_white = task_share.Share('H', thread_protect=False, name="calib white")
+    line_follow = task_share.Share('H', thread_protect=False, name="line follow")
     wheel_diff = task_share.Share('f', thread_protect=False, name="wheel speed diff")
     yaw_angle_share = task_share.Share('f', thread_protect=False, name="yaw angle")
     yaw_rate_share = task_share.Share('f', thread_protect=False, name="yaw rate")
@@ -887,6 +917,7 @@ if __name__ == "__main__":
     time_start_share = task_share.Share('I', thread_protect=False, name="time start")
     X_coords_share = task_share.Share('f', thread_protect=False, name="X coordinate")
     Y_coords_share = task_share.Share('f', thread_protect=False, name="Y coordinate")
+    start_pathing = task_share.Share('H', thread_protect=False, name="start pathing")
 
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
@@ -933,6 +964,9 @@ if __name__ == "__main__":
 
     task_bump_sensor = cotask.Task(bump_sensors, name = "bump sensor Interrupt", priority=0, period = 20,
                                    profile=True, trace=True, shares = (R_lin_spd, L_lin_spd))
+    
+    task_pathing = cotask.Task(pathing, name = "Pathing", priority=0, period = 100, profile = True, trace=True,
+                               shares = (L_vel_share, R_vel_share, X_coords_share, Y_coords_share, dist_traveled_share, start_pathing, line_follow))
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
 
@@ -945,6 +979,7 @@ if __name__ == "__main__":
     cotask.task_list.append(task_IR_sensor)
     cotask.task_list.append(task_state_estimator)
     cotask.task_list.append(task_bump_sensor)
+    cotask.task_list.append(task_pathing)
 
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started
