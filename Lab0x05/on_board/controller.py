@@ -22,7 +22,7 @@ Created on Thu Oct 23 09:23:36 2025
 from time import ticks_diff
 class CLMotorController():
     def __init__(self, target, old_ticks, old_state, Kp=1, Ki=1, min_sat=-100, max_sat=100, t_init=0,
-                 v_nom=9.0, threshold=5.0, K3=0.61):
+                 v_nom=9.0, threshold=5.0, K3=0.61, use_integral=1):
         # super().__init__(target, old_ticks, old_state, Kp, Ki, min_sat, max_sat, t_init)
         self.target = target
         self.old_ticks = old_ticks
@@ -43,6 +43,7 @@ class CLMotorController():
         self.K2 = 0.25 # wheel degrees per encoder count
         self.K3 = K3 # effort=%pwm / (wheel degrees/sec)
         self.KWindup = 0.1
+        self.use_integral = use_integral
     def set_Kp(self, Kp):
         self.Kp = Kp
 
@@ -58,8 +59,10 @@ class CLMotorController():
         # sets the battery level and calculates the gain
         self.v_bat = v_bat
         self.bat_gain = self.v_nom/self.v_bat
-    def clear_integral_error(self):
-        self.acc_error = 0
+    def disable_integral_error(self):
+        self.use_integral = 0
+    def enable_integral_error(self):
+        self.use_integral = 1
 
     def get_action(self, new_ticks, new_state):
         # new_state is a velocity in counts/sec
@@ -79,7 +82,7 @@ class CLMotorController():
             self.acc_error = self.acc_error + self.error*self.dt #Integral error, equivalent to degrees
             self.old_ticks = new_ticks
         # do control algorithm
-        raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error) # control output in wheel degrees per second
+        raw_ctrl_sig = (self.Kp*self.error + self.Ki*self.acc_error*self.use_integral) # control output in wheel degrees per second
         ctrl_sig = raw_ctrl_sig*self.K3
         # if ctrl_sig>self.max_sat:
         #     ctrl_sig -= self.KWindup*(ctrl_sig-self.max_sat)
@@ -94,8 +97,7 @@ class CLMotorController():
             # Stop integrating if saturated in same direction
             if (ctrl_sig > 0 and self.error > 0) or (ctrl_sig < 0 and self.error < 0):
                 self.acc_error -= self.error*self.dt  # undo last integral term
-
-        
+                self.acc_error *= self.use_integral
         return ctrl_sig
 
 class IRController():

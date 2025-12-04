@@ -83,7 +83,7 @@ channels = [ir_ch1, ir_ch3, ir_ch5, ir_ch7, ir_ch9, ir_ch11, ir_ch13]
 ir_sensor_array = sensor_array(channels, 4, 8)
 
 centroid_set_point = 0
-ir_controller = IRController(centroid_set_point, 0, 0, Kp=3, Ki=1)
+# ir_controller = IRController(centroid_set_point, 0, 0, Kp=3, Ki=1)
 
 
 def IR_sensor(shares):
@@ -182,10 +182,7 @@ i2c = I2C(2, I2C.CONTROLLER)
 IMU = IMU_I2C(i2c, IMU_addr)  # Create IMU_I2C object
 
 
-
-
 def IMU_OP(shares):
-    
     # def updateXY(x_coord, y_coord):
     #     # dt = new_time_meas - old_time_saved
     #     # old_time_saved = old_time # old time is now the same as curr_time
@@ -193,8 +190,7 @@ def IMU_OP(shares):
     #     x_coord_new = x_coord + S_diff*math.cos(x_hat_new[3])
     #     y_coord_new = y_coord + S_diff*math.sin(x_hat_new[3])
     #     return x_coord_new, y_coord_new
-    
-    
+
     L_pos_share, R_pos_share, L_voltage_share, R_voltage_share, L_vel_share, R_vel_share, \
         yaw_angle_share, yaw_rate_share, dist_traveled_share, IMU_time_share, test_start_time, x_position, y_position = shares
     heading_offset = 0
@@ -208,26 +204,28 @@ def IMU_OP(shares):
     u_aug = np.array(np.zeros(6).reshape(6, ))
     y_measured = np.array(np.zeros(4).reshape(4, ))
     y_hat = np.array(np.zeros(4).reshape(4, ))
-    
+
     # Set initial global coordinates
-    global_coords = [0,0]
-    
+    global_coords = [0, 0]
+    est_global_coords = [0, 0]
+
     # A_d = np.array(
     #     [0.50,0.06,0.01,0.000000,0.06,0.50,0.01,0.000000,0.02,0.02,0.98,0.000000,0.000000,0.000000,0.000000,1.000000]).reshape((4, 4)).transpose()
     A_d = np.array(
-        [0.499445,0.499445,0.001942,0.002727,0.499445,0.499445,0.001942,-0.002727,0.285397,0.285397,0.001110,-0.000000,-0.000000,-0.000000,0.000000,1.000000]).reshape((4, 4)).transpose()
-    
+        [0.499445, 0.499445, 0.001942, 0.002727, 0.499445, 0.499445, 0.001942, -0.002727, 0.285397, 0.285397, 0.001110,
+         -0.000000, -0.000000, -0.000000, 0.000000, 1.000000]).reshape((4, 4)).transpose()
+
     # B_d = np.array([
     #     0.18,0.02,0.000000,0.000000,0.02,0.18,0.000000,0.000000,0.000000,0.000000,0.45,0.000000,0.000000,0.000000,0.45,0.000000,0.000000,0.000000,0.000000,0.95,0.000000,0.000000,0.000000,0.050000]).reshape((6, 4)).transpose()
     # B_d[3,5] = 0
     # B_d[3, 4] = 1
     B_d = np.array([
-    0.143168,0.140021,0.000545,0.000765,0.140021,0.143168,0.000545,-0.000765,-0.142699,-0.142699,0.499445,
-       0.000000,-0.142699,-0.142699,0.499445,0.000000,-0.000000,0.000000,
-       -0.000000,0.000000,-2.012050,2.012050,0.000000,0.022074]).reshape((6, 4)).transpose()
+        0.143168, 0.140021, 0.000545, 0.000765, 0.140021, 0.143168, 0.000545, -0.000765, -0.142699, -0.142699, 0.499445,
+        0.000000, -0.142699, -0.142699, 0.499445, 0.000000, -0.000000, 0.000000,
+        -0.000000, 0.000000, -2.012050, 2.012050, 0.000000, 0.022074]).reshape((6, 4)).transpose()
     C = np.array(
-        [0.000000,0.000000,0.000000,-0.248227,0.000000,0.000000,0.000000,0.248227,
-        1.000000,1.000000,0.000000,0.000000,-70.500000,70.500000,1.000000,0.000000]).reshape((4, 4)).transpose()
+        [0.000000, 0.000000, 0.000000, -0.248227, 0.000000, 0.000000, 0.000000, 0.248227,
+         1.000000, 1.000000, 0.000000, 0.000000, -70.500000, 70.500000, 1.000000, 0.000000]).reshape((4, 4)).transpose()
 
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_us()
@@ -254,7 +252,7 @@ def IMU_OP(shares):
                     print("IMU not calibrated for some reason")
                     print(cal_status)
                     state = 1
-           
+
             else:
 
                 cal_bit = False
@@ -279,14 +277,13 @@ def IMU_OP(shares):
             # print("State 1")
             # y vector:
             sleep_ms(200)
-            Euler_offset = IMU.readEulerAngles()[0]  # update yaw angle (rad)    
+            Euler_offset = IMU.readEulerAngles()[0]  # update yaw angle (rad)
             # print(f"Offset: {Euler_offset}")
-            
+
             y_measured[0] = L_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[1] = R_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[2] = IMU.readEulerAngles()[0] - Euler_offset  # update yaw angle (rad)
             y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate (rad/s)
-            
 
             # Psi = Sr - Sl/w (use encoder values)
             y_measured[2] = (y_measured[1] - y_measured[0]) / robot_width
@@ -314,7 +311,7 @@ def IMU_OP(shares):
             # print(f"LINE 283{x_hat_new}")
             x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
             # x_hat_new = np.dot(B_d, u_aug)
-            y_hat = np.dot(C, x_hat_old)
+            y_hat = np.dot(C, x_hat_new)
             dist_traveled = x_hat_new[2]
             # print(f"estimator distance: {dist_traveled}")
             dist_traveled_share.put(dist_traveled)
@@ -336,35 +333,43 @@ def IMU_OP(shares):
             # print(f"U_AUG: {u_aug}")
             # print(L_pos_share.get())
             # print(R_pos_share.get())
-            
+
             # print(f"LINE 306 {x_hat_new}")
             dist_traveled_old = x_hat_old[2]
             x_hat_old = x_hat_new
-            
+
             S_diff = x_hat_new[2] - dist_traveled_old
-            global_coords[0] = global_coords[0] + S_diff*math.cos(-1* y_measured[2])
+            global_coords[0] = global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
             if y_measured[2] >= 3.14:
-                global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
+                global_coords[1] = global_coords[1] + S_diff * math.sin(-1 * y_measured[2])
             else:
-                global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
-            
+                global_coords[1] = global_coords[1] + S_diff * math.sin(-1 * y_measured[2])
+
             # print(f"Angle: {-1* y_measured[3]} sin value: {math.sin(-1* y_measured[3])} cos value: {math.cos(-1* y_measured[3])}" )
             # print(f"Psi: {y_measured[3]}, S: {x_hat_new[2]}")
             # global_coords = updateXY(global_coords[0], global_coords[1])
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
-            
-            print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
-            
+
+            # print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
+
+            # use estimated states for the  position calculator
+            est_global_coords[0] = est_global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
+            if y_hat[2] >= 3.14:
+                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+            else:
+                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+            print(f"est_out: Sl {y_hat[0]} Sr {y_hat[1]} psi {y_hat[2]} psi_dot {y_hat[3]} X: {est_global_coords[0]}, Y: {est_global_coords[1]}")
+            # print(f"x-coord: {est_global_coords[0]}, y-coord: {est_global_coords[1]}")
+
+            x_position.get()
+            y_position.get()
+
+            x_position.put(global_coords[0])
+            y_position.put(global_coords[1])
+
             state = 2
-                            
-                
-                
         yield state
-
-
-    
-
 
 
 """
@@ -408,8 +413,10 @@ def left_ops(shares):
             if L_en.get() > 0:
                 # left_encoder.zero()
                 mot_left.enable()
+                cl_ctrl_mot_left.enable_integral_error()
             else:
                 mot_left.disable()
+                cl_ctrl_mot_left.disable_integral_error()
             left_base_target = L_lin_spd.get()
             if follower_on.get():
                 follower_diff = line_follower_diff.get() / 2
@@ -451,9 +458,11 @@ def right_ops(shares):
             if R_en.get() > 0:
                 # right_encoder.zero()
                 mot_right.enable()
+                cl_ctrl_mot_right.enable_integral_error()
             else:
                 mot_right.disable()
                 R_prev_en = R_en.get()
+                cl_ctrl_mot_right.disable_integral_error()
             right_base_target = R_lin_spd.get()
             cl_ctrl_mot_right.set_target(right_base_target)
             R_prev_eff = R_lin_spd.get()  # store and update the effort
@@ -515,7 +524,7 @@ def run_UI(shares):
                 uart.read()
         elif state == 1:
             if uart.any():  # wait for any character
-                print("Yay")
+                # print("Yay")
                 char_in = uart.read(1).decode()
                 state = 2
         elif state == 2:  # decode character
@@ -562,8 +571,8 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
-                l_lin_spd = 200
-                r_lin_spd = 200
+                l_lin_spd = 129
+                r_lin_spd = 80
                 L_lin_speed.put(l_lin_spd)
                 R_lin_speed.put(r_lin_spd)
                 # state = 1
@@ -571,6 +580,8 @@ def run_UI(shares):
                 test_start_time = ticks_ms()  # Record start time of test
                 data_collect_comp_time = ticks_us()
                 test_start_time_share.put(data_collect_comp_time)
+
+                # print("____________________received z!!")
                 state = 3
 
             elif char_in == "z":
@@ -686,7 +697,7 @@ def collect_data(shares):
             # S_R_Q = cqueue.FloatQueue(QUEUE_SIZE)
             Psi_Q = cqueue.FloatQueue(QUEUE_SIZE)
             Psi_dot_Q = cqueue.FloatQueue(QUEUE_SIZE)
-            
+
             X_position_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Position share is initialized as f
             Y_position_Q = cqueue.FloatQueue(QUEUE_SIZE)  # Position share is initialized as f
 
@@ -730,10 +741,10 @@ def collect_data(shares):
 
                 Psi_Q.put(yaw_angle.get())
                 Psi_dot_Q.put(yaw_rate.get())
-                
+
                 X_position_Q.put(x_position.get())
                 Y_position_Q.put(y_position.get())
-                
+
                 # IMU_TIME_Q.put(IMU_time_share.get())
 
                 state = 2
@@ -794,7 +805,7 @@ def battery_read(shares):
         # print("BATTERY TASK")
         battery, low_bat_flag = shares
         battery_level = BAT_READ.read() * 3.3 / 4095  # CONVERT TO VOLTAGE READ BY THE ADC
-        battery_level = battery_level * 14.7/4.7 # CONVERT TO ACTUAL BATTERY AMOUNT USING RESISTOR VALUES IN VOLTAGE DIVIDER
+        battery_level = battery_level * 14.7 / 4.7  # CONVERT TO ACTUAL BATTERY AMOUNT USING RESISTOR VALUES IN VOLTAGE DIVIDER
         battery.put(battery_level)
         cl_ctrl_mot_left.set_battery(battery_level)
         cl_ctrl_mot_right.set_battery(battery_level)
