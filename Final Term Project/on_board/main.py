@@ -71,9 +71,14 @@ mot_right = motor_driver(Pin.cpu.A6, Pin.cpu.A1, Pin.cpu.A0, Timer(16, freq=6000
 
 # Create Motor Controllers
 # CONTROLLER SETPOINT IS IN MM/S
-cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
+# cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
+#                                      v_nom=9, threshold=5, K3=.06687)
+# cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
+#                                       v_nom=9, threshold=5, K3=.06841)
+
+cl_ctrl_mot_left = CLMotorController(0, 0, 0, Kp=.5, Ki=10, min_sat=-100, max_sat=100, t_init=0,
                                      v_nom=9, threshold=5, K3=.06687)
-cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=3.8, min_sat=-100, max_sat=100, t_init=0,
+cl_ctrl_mot_right = CLMotorController(0, 0, 0, Kp=.5, Ki=10, min_sat=-100, max_sat=100, t_init=0,
                                       v_nom=9, threshold=5, K3=.06841)
 
 """! Battery Read Task setup !"""
@@ -96,7 +101,7 @@ ir_sensor_array = sensor_array(channels, 4, 8)
 # Setup IR Sensor controller
 centroid_set_point = 0
 
-ir_controller = IRController(centroid_set_point, 0 , 0, K3=1, Kp=1, Ki=0)
+ir_controller = IRController(centroid_set_point, 0 , 0, K3=1, Kp=1, Ki=.5)
 
 """! Setup for IMU !"""
 
@@ -223,7 +228,7 @@ def IR_sensor(shares):
             
             # split the difference in wheel speeds evenly between the two wheels
             wheel_diff.put(scaled_speed_diff)
-            print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {controloutput_diff}, scaled speed diff: {scaled_speed_diff}")
+            # print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {controloutput_diff}, scaled speed diff: {scaled_speed_diff}")
             # print(wheel_speed_diff)
         yield state
 
@@ -254,8 +259,8 @@ def IMU_OP(shares):
     y_hat = np.array(np.zeros(4).reshape(4, ))
     
     # Set initial global coordinates
-    global_coords = [0, 0]
-    est_global_coords = [0, 0]
+    global_coords = [100, 800]
+    est_global_coords = [100, 800]
 
     
     A_d = np.array(
@@ -384,11 +389,9 @@ def IMU_OP(shares):
             x_hat_old = x_hat_new
             
             S_diff = x_hat_new[2] - dist_traveled_old
-            global_coords[0] = global_coords[0] + S_diff*math.cos(-1* y_measured[2])
-            if y_measured[2] >= 3.14:
-                global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
-            else:
-                global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
+            global_coords[0] = global_coords[0] + S_diff*math.cos(-1 * y_measured[2])
+            
+            global_coords[1] = global_coords[1] + S_diff*math.sin(-1 * y_measured[2])
             
             # print(f"Angle: {-1* y_measured[3]} sin value: {math.sin(-1* y_measured[3])} cos value: {math.cos(-1* y_measured[3])}" )
             # print(f"Psi: {y_measured[3]}, S: {x_hat_new[2]}")
@@ -396,14 +399,12 @@ def IMU_OP(shares):
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
             
-            # print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
+            print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
             # use estimated states for the  position calculator
             est_global_coords[0] = est_global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
-            if y_hat[2] >= 3.14:
-                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
-            else:
-                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
-            print(f"est_out: Sl {y_hat[0]} Sr {y_hat[1]} psi {y_hat[2]} psi_dot {y_hat[3]} X: {est_global_coords[0]}, Y: {est_global_coords[1]}")
+            est_global_coords[1] = est_global_coords[1] - S_diff * math.sin(-1 * y_hat[2])
+            # print(f"est_out: Sl {y_hat[0]} Sr {y_hat[1]} psi {y_hat[2]} psi_dot {y_hat[3]} X: {est_global_coords[0]}, Y: {est_global_coords[1]}")
+            # print(f"X: {est_global_coords[0]} Y:{est_global_coords[1]}")
             # print(f"x-coord: {est_global_coords[0]}, y-coord: {est_global_coords[1]}")
 
             x_position.get()
@@ -610,8 +611,8 @@ def run_UI(shares):
                 l_en = 0
                 R_en.put(r_en)
                 L_en.put(l_en)
-                l_lin_spd = 200
-                r_lin_spd = 200
+                l_lin_spd = 150
+                r_lin_spd = 150
                 L_lin_speed.put(l_lin_spd)
                 R_lin_speed.put(r_lin_spd)
                 # state = 1
