@@ -254,24 +254,22 @@ def IMU_OP(shares):
     y_hat = np.array(np.zeros(4).reshape(4, ))
     
     # Set initial global coordinates
-    global_coords = [0,0]
+    global_coords = [0, 0]
+    est_global_coords = [0, 0]
+
     
-    # A_d = np.array(
-    #     [0.50,0.06,0.01,0.000000,0.06,0.50,0.01,0.000000,0.02,0.02,0.98,0.000000,0.000000,0.000000,0.000000,1.000000]).reshape((4, 4)).transpose()
     A_d = np.array(
-        [0.499445,0.499445,0.001942,0.002727,0.499445,0.499445,0.001942,-0.002727,0.285397,0.285397,0.001110,-0.000000,-0.000000,-0.000000,0.000000,1.000000]).reshape((4, 4)).transpose()
+        [0.499445, 0.499445, 0.001942, 0.002727, 0.499445, 0.499445, 0.001942, -0.002727, 0.285397, 0.285397, 0.001110,
+         -0.000000, -0.000000, -0.000000, 0.000000, 1.000000]).reshape((4, 4)).transpose()
     
-    # B_d = np.array([
-    #     0.18,0.02,0.000000,0.000000,0.02,0.18,0.000000,0.000000,0.000000,0.000000,0.45,0.000000,0.000000,0.000000,0.45,0.000000,0.000000,0.000000,0.000000,0.95,0.000000,0.000000,0.000000,0.050000]).reshape((6, 4)).transpose()
-    # B_d[3,5] = 0
-    # B_d[3, 4] = 1
     B_d = np.array([
-    0.143168,0.140021,0.000545,0.000765,0.140021,0.143168,0.000545,-0.000765,-0.142699,-0.142699,0.499445,
-       0.000000,-0.142699,-0.142699,0.499445,0.000000,-0.000000,0.000000,
-       -0.000000,0.000000,-2.012050,2.012050,0.000000,0.022074]).reshape((6, 4)).transpose()
+       0.143168, 0.140021, 0.000545, 0.000765, 0.140021, 0.143168, 0.000545, -0.000765, -0.142699, -0.142699, 0.499445,
+       0.000000, -0.142699, -0.142699, 0.499445, 0.000000, -0.000000, 0.000000,
+       -0.000000, 0.000000, -2.012050, 2.012050, 0.000000, 0.022074]).reshape((6, 4)).transpose()
+   
     C = np.array(
-        [0.000000,0.000000,0.000000,-0.248227,0.000000,0.000000,0.000000,0.248227,
-        1.000000,1.000000,0.000000,0.000000,-70.500000,70.500000,1.000000,0.000000]).reshape((4, 4)).transpose()
+       [0.000000, 0.000000, 0.000000, -0.248227, 0.000000, 0.000000, 0.000000, 0.248227,
+        1.000000, 1.000000, 0.000000, 0.000000, -70.500000, 70.500000, 1.000000, 0.000000]).reshape((4, 4)).transpose()
 
     state = 0  # Calibration Procedure/Load calibration values
     old_time = ticks_us()
@@ -358,7 +356,7 @@ def IMU_OP(shares):
             # print(f"LINE 283{x_hat_new}")
             x_hat_new = np.dot(A_d, x_hat_old) + np.dot(B_d, u_aug)
             # x_hat_new = np.dot(B_d, u_aug)
-            y_hat = np.dot(C, x_hat_old)
+            y_hat = np.dot(C, x_hat_new)
             dist_traveled = x_hat_new[2]
             # print(f"estimator distance: {dist_traveled}")
             dist_traveled_share.put(dist_traveled)
@@ -399,11 +397,22 @@ def IMU_OP(shares):
             y_position.put(global_coords[1])
             
             # print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
-            
+            # use estimated states for the  position calculator
+            est_global_coords[0] = est_global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
+            if y_hat[2] >= 3.14:
+                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+            else:
+                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+            print(f"est_out: Sl {y_hat[0]} Sr {y_hat[1]} psi {y_hat[2]} psi_dot {y_hat[3]} X: {est_global_coords[0]}, Y: {est_global_coords[1]}")
+            # print(f"x-coord: {est_global_coords[0]}, y-coord: {est_global_coords[1]}")
+
+            x_position.get()
+            y_position.get()
+
+            x_position.put(global_coords[0])
+            y_position.put(global_coords[1])
+
             state = 2
-                            
-                
-                
         yield state
 
 
@@ -438,8 +447,10 @@ def left_ops(shares):
             if L_en.get() > 0:
                 # left_encoder.zero()
                 mot_left.enable()
+                cl_ctrl_mot_left.enable_integral_error()
             else:
                 mot_left.disable()
+                cl_ctrl_mot_left.disable_integral_error()
             left_base_target = L_lin_spd.get()
             if follower_on.get():
                 follower_diff = line_follower_diff.get() / 2
@@ -460,7 +471,7 @@ def left_ops(shares):
 
 
 def right_ops(shares):
-    print("RIGHT OPS")
+    # print("RIGHT OPS")
     state = 0
     # params: R dir, R eff, R en, R pos, R vel, R time
     R_lin_spd, R_en, R_pos, R_vel, R_time, line_follower_diff, follower_on, R_voltage = shares
@@ -481,9 +492,11 @@ def right_ops(shares):
             if R_en.get() > 0:
                 # right_encoder.zero()
                 mot_right.enable()
+                cl_ctrl_mot_right.enable_integral_error()
             else:
                 mot_right.disable()
                 R_prev_en = R_en.get()
+                cl_ctrl_mot_right.disable_integral_error()
             right_base_target = R_lin_spd.get()
             cl_ctrl_mot_right.set_target(right_base_target)
             R_prev_eff = R_lin_spd.get()  # store and update the effort
