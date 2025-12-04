@@ -75,7 +75,6 @@ if cal_file in os_files:
         print("IMU not calibrated for some reason")
         print(cal_status)
 else:
-
     cal_bit = False
     IMU.changeOpMode(full_sensor_fusion_op_mode)
     while not cal_bit:
@@ -159,11 +158,6 @@ while True:
     if ticks_diff(curr_time, old_time) >= 50:
         old_time = curr_time()
         # do the estimation algorithm (IDK HOW, GIVING UP FOR NOW
-
-
-
-
-
 
 # if cal_status[1]==cal_status[2]==cal_status[3]==3:
 #     print("IMU calibrated")

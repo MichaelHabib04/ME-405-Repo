@@ -73,7 +73,7 @@ class IMU_I2C:
     
     def writeCalCoefficients(self, calFileTxt): # Writes cal coefficients from pre-recorded bianary data
         # self.changeOpMode(config_op_mode) # must be in config op mode to write sensor data
-        # time.sleep_ms(200)
+        # time.sleep_ms(200)t
         with open(calFileTxt, "rb") as f: # calFileTxt is string of cal text file stored on the board
             calData = bytearray(f.read(22)) # Read text file and store into byte array
         self.I2Cobj.mem_write(calData, self.address, calib_coeff_addr, timeout=5000, addr_size=8)

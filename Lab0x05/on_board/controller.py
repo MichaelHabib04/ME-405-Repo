@@ -58,6 +58,8 @@ class CLMotorController():
         # sets the battery level and calculates the gain
         self.v_bat = v_bat
         self.bat_gain = self.v_nom/self.v_bat
+    def clear_integral_error(self):
+        self.acc_error = 0
 
     def get_action(self, new_ticks, new_state):
         # new_state is a velocity in counts/sec
