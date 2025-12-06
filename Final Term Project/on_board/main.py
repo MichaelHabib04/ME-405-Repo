@@ -9,7 +9,7 @@ from Encoder import Encoder
 from motor_driver import motor_driver
 from time import sleep_ms
 from pyb import USB_VCP
-from controller import CLMotorController, IRController
+from controller import CLMotorController, IRController, PositionController
 from ir_sensor import IR_sensor
 from sensor_array import sensor_array
 from machine import UART
@@ -97,6 +97,7 @@ ir_sensor_array = sensor_array(channels, 4, 8)
 centroid_set_point = 0
 
 ir_controller = IRController(centroid_set_point, 0 , 0, K3=1, Kp=1, Ki=0)
+position_controller = PositionController(0, 0 , 0, K3=1, Kp=1, Ki=0)
 
 """! Setup for IMU !"""
 
@@ -198,6 +199,42 @@ def bump_sensors(shares):
             print("OW")
     
         yield state
+def PositionControl(shares):
+    x_position, y_position, start_pathing, IMU_time_share, yaw_angle_share = shares
+    def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set): #calculates difference between desired and real yaw
+        # E is the vector pointing from Romi's position to the target
+        E_x = x_set - x_curr
+        E_y = y_set - y_curr
+        # E_yaw = math.atan2(E_y, E_x) # atan2 output is between negative pi and pi
+        E_mag = math.sqrt(E_x*E_x + E_y*E_y)
+        # C is the unit vector pointing in the current yaw direction
+        C_x = math.cos(yaw_curr)
+        C_y = math.sin(yaw_curr)
+        # Theta is the angle between vectors, but is always positive
+        theta = math.acos((C_x*E_x + C_y*E_y)/E_mag)
+        cross = C_x*E_x - C_y*E_y
+        # positive sign means theta is CCW, negative is CW
+        # output is the angle FROM E to C
+        sign = -1*cross/abs(cross)
+        return theta*sign, E_mag
+    state = 0
+    while True:
+        if state == 0:
+            state = 1
+        elif state == 1:
+            state = 2
+        elif state == 2:
+            PC_ticks_new = IMU_time_share.get()  # timestamp sensor reading for controller
+            control_output_diff = position_controller.get_action(PC_ticks_new, yaw_error)
+            scaled_speed_diff = control_output_diff * 70
+            yaw_err, dist_to_checkpoint = yaw_error(x_position.get(), y_position.get(), yaw_angle_share.get(), )
+            # split the difference in wheel speeds evenly between the two wheels
+            wheel_diff.put(scaled_speed_diff, yaw_error)
+            print(
+                f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {control_output_diff}, scaled speed diff: {scaled_speed_diff}")
+
+
+
 
 def IR_sensor(shares):
     global centroid_set_point
@@ -452,7 +489,7 @@ def left_ops(shares):
     print("LEFT OPS")
     state = 0
     # params: L dir, L eff, L en, L pos, L vel, L time
-    L_lin_spd, L_en, L_pos, L_vel, L_time, line_follower_diff, follower_on, L_voltage = shares
+    L_lin_spd, L_en, L_pos, L_vel, L_time, line_follower_diff, follower_on, L_voltage, position_follower_diff, pathing_on = shares
     global L_prev_dir, L_prev_eff, L_prev_en, L_t_start
     # State 0: init
     while True:
@@ -479,14 +516,14 @@ def left_ops(shares):
             if follower_on.get():
                 follower_diff = line_follower_diff.get() / 2
                 left_target = left_base_target - follower_diff
+            if pathing_on.get():  # implement the speed adjustment from the line follower task
+                follower_diff = position_follower_diff.get() / 2
+                cl_ctrl_mot_left.set_target(left_base_target + follower_diff)
             else:
                 left_target = left_base_target
-
             cl_ctrl_mot_left.set_target(left_target)
             pwm_percent = cl_ctrl_mot_left.get_action(L_t_new, left_encoder.get_velocity())
             mot_left.set_effort(pwm_percent)
-            # print(f"left target speed: {left_target}")
-            # print(f"PWM percent: {pwm_percent}")
             L_voltage.put(pwm_percent * 9 / 100)  # pwm percent sent to motor
             L_pos.put(left_encoder.get_position())  # counts
             L_vel.put(left_encoder.get_velocity())  # counts
@@ -498,7 +535,7 @@ def right_ops(shares):
     # print("RIGHT OPS")
     state = 0
     # params: R dir, R eff, R en, R pos, R vel, R time
-    R_lin_spd, R_en, R_pos, R_vel, R_time, line_follower_diff, follower_on, R_voltage = shares
+    R_lin_spd, R_en, R_pos, R_vel, R_time, line_follower_diff, follower_on, R_voltage, position_follower_diff, pathing_on = shares
     global R_prev_dir, R_prev_eff, R_prev_en, R_t_start
     # State 0: init
     while True:
@@ -527,6 +564,9 @@ def right_ops(shares):
             R_prev_eff = R_lin_spd.get()  # store and update the effort
             if follower_on.get():  # implement the speed adjustment from the line follower task
                 follower_diff = line_follower_diff.get() / 2
+                cl_ctrl_mot_right.set_target(right_base_target + follower_diff)
+            if pathing_on.get():  # implement the speed adjustment from the line follower task
+                follower_diff = position_follower_diff.get() / 2
                 cl_ctrl_mot_right.set_target(right_base_target + follower_diff)
             pwm_percent = cl_ctrl_mot_right.get_action(R_t_new, right_encoder.get_velocity())  # t_print is a pwm%
             mot_right.set_effort(pwm_percent)
@@ -909,6 +949,7 @@ if __name__ == "__main__":
     calib_black = task_share.Share('H', thread_protect=False, name="calib black")
     calib_white = task_share.Share('H', thread_protect=False, name="calib white")
     line_follow = task_share.Share('H', thread_protect=False, name="line follow")
+    position_follow = task_share.Share('H', thread_protect=False, name="position follow")
     wheel_diff = task_share.Share('f', thread_protect=False, name="wheel speed diff")
     yaw_angle_share = task_share.Share('f', thread_protect=False, name="yaw angle")
     yaw_rate_share = task_share.Share('f', thread_protect=False, name="yaw rate")
@@ -935,11 +976,11 @@ if __name__ == "__main__":
     task_left_ops = cotask.Task(left_ops, name="Left ops", priority=3, period=20,
                                 profile=True, trace=True, shares=(L_lin_spd, L_en_share, L_pos_share, L_vel_share,
                                                                   L_time_share, wheel_diff, line_follow,
-                                                                  L_voltage_share))
+                                                                  L_voltage_share, position_follow))
     task_right_ops = cotask.Task(right_ops, name="Right ops", priority=4, period=20,
                                  profile=True, trace=True, shares=(R_lin_spd, R_en_share, R_pos_share, R_vel_share,
                                                                    R_time_share, wheel_diff, line_follow,
-                                                                   R_voltage_share))
+                                                                   R_voltage_share, position_follow))
   
 
     task_ui = cotask.Task(run_UI, name="UI", priority=1, period=100,
