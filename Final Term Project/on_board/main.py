@@ -14,7 +14,7 @@ from ir_sensor import IR_sensor
 from sensor_array import sensor_array
 from machine import UART
 from IMU_I2C import IMU_I2C
-import os
+from os import listdir
 from ulab import numpy as np
 # import math
 from command import Command
@@ -360,7 +360,7 @@ def IMU_OP(shares):
     while True:
         if state == 0:
             cal_file = "IMU_cal.txt"
-            os_files = os.listdir()
+            os_files = listdir()
             if cal_file in os_files:
                 uart.write("Calibrating")
                 IMU.changeOpMode(config_op_mode)
@@ -396,7 +396,7 @@ def IMU_OP(shares):
                 with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
                     f.write(cal_data_bytes)
                     state = 1
-                print(os.listdir())  # Can be used to check if cal file exists
+                print(listdir())  # Can be used to check if cal file exists
         elif state == 1:  # Initialize reference Yaw based on encoder values
             # print("State 1")
             # y vector:
