@@ -191,7 +191,7 @@ def commander(shares):
         # print(gc.mem_free())
         gc.collect()
         if state == 0:
-            if _operations and start_pathing.get():  # check if commands list is empty
+            if op_ind < len(_operations) and start_pathing.get():  # check if commands list is empty
                 curr_command = _operations[op_ind]
                 state = 1
             else:
@@ -259,8 +259,6 @@ def PositionControl(shares):
                 position_controller.enable_integral_error()
                 position_controller.old_ticks = IMU_time_share.get()
                 state = 1
-            else:
-                state = 0
         elif state == 1:
             # timestamp sensor reading for controller
             yaw_err, dist_to_checkpoint = yaw_error(x_position.get(), y_position.get(), yaw_angle_share.get(),
@@ -269,17 +267,16 @@ def PositionControl(shares):
             scaled_speed_diff = control_output_diff * 70
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
-            # print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {control_output_diff}, scaled speed diff: {scaled_speed_diff}")
             if not start_pathing.get():
+                position_controller.enable_integral_error()
                 state = 0
-            else:
-                state = 1
         yield state
 
 
 def IR_sensor(shares):
     global centroid_set_point
     calib_black, calib_white, line_follow, L_speed_share, R_speed_share, wheel_diff = shares
+    ir_controller.disable_integral_error()
     state = 0
     while True:
         # print("IR TASK CALLED")
@@ -290,6 +287,7 @@ def IR_sensor(shares):
             elif calib_white.get() == 1:
                 state = 2
             elif line_follow.get() == 1:
+                ir_controller.enable_integral_error()
                 state = 3
         elif state == 1:
             # print("Starting Black Calibration!")
@@ -319,13 +317,16 @@ def IR_sensor(shares):
             ir_controller.set_target(centroid_set_point)
             ir_sensor_array.array_read()
             ir_ticks_new = ticks_us()  # timestamp sensor reading for controller
-            controloutput_diff = ir_controller.get_action(ir_ticks_new, ir_sensor_array.find_centroid())
-            scaled_speed_diff = controloutput_diff * 70
+            control_output_diff = ir_controller.get_action(ir_ticks_new, ir_sensor_array.find_centroid())
+            scaled_speed_diff = control_output_diff * 70
 
             # split the difference in wheel speeds evenly between the two wheels
             wheel_diff.put(scaled_speed_diff)
             # print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {controloutput_diff}, scaled speed diff: {scaled_speed_diff}")
             # print(wheel_speed_diff)
+            if not line_follow.get():
+                ir_controller.disable_integral_error()
+                state = 0
         yield state
 
 
@@ -655,103 +656,103 @@ def run_UI(shares):
                 char_in = uart.read(1).decode()
                 state = 2
         elif state == 2:  # decode character
-            if char_in == "r":
-                r_lin_spd += 2
-                R_lin_speed.put(r_lin_spd)
-                state = 1
-            elif char_in == "e":
-                r_lin_spd -= 10
-                R_lin_speed.put(r_lin_spd)
-                state = 1
-            elif char_in == "c":
-                # print(r_en)
-                if r_en == 1:
-                    r_en = 0
-                else:
-                    r_en = 1
-                R_en.put(r_en)
-                state = 1
-            elif char_in == "l":
-                l_lin_spd += 2
-                L_lin_speed.put(l_lin_spd)
-                state = 1
-            elif char_in == "k":
-                l_lin_spd -= 10
-                L_lin_speed.put(l_lin_spd)
-                state = 1
-            elif char_in == "n":
-                if l_en == 1:
-                    l_en = 0
-                else:
-                    l_en = 1
-                L_en.put(l_en)
-                state = 1
-            elif char_in == "p":
-                uart.write("Left motor effort: ", l_lin_spd, "\nRight motor effort: ", r_lin_spd)
-                state = 1
-            elif char_in == "b":
-                r_lin_spd = 100
-                l_lin_spd = 100
-                R_lin_speed.put(r_lin_spd)
-                L_lin_speed.put(l_lin_spd)
-                print("Hi")
-                state = 1
-
-            elif char_in == "t":  # Run a test setting right and left speeds
-                r_en = 0
-                l_en = 0
-                R_en.put(r_en)
-                L_en.put(l_en)
-                l_lin_spd = 200
-                r_lin_spd = 200
-                L_lin_speed.put(l_lin_spd)
-                R_lin_speed.put(r_lin_spd)
-                # state = 1
-                Run.put(1)  # Indicates start to data collection
-                test_start_time = ticks_ms()  # Record start time of test
-                data_collect_comp_time = ticks_us()
-                test_start_time_share.put(data_collect_comp_time)
-                state = 3
-
-            elif char_in == "z":
-                # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
-                if Print_out.get() != 1:
-                    Print_out.put(1)
-                    # print("Print_out set!")
-                state = 1
-            elif char_in == "s":  # Run step response test, at whatever effort the right motor was last set to
-                uart.write("starting step reponse!______________")
-
-                r_en = 0
-                l_en = 0
-                R_en.put(r_en)
-                L_en.put(l_en)
-                l_lin_spd = r_lin_spd
-                L_lin_speed.put(l_lin_spd)
-                Run.put(1)  # Indicates start to data collection
-                test_start_time = ticks_ms()  # Record start time of test
-
-                state = 3
-            elif char_in == "i":  # run black calibration sequence for IR sensor
-                calib_black.put(1)
-                state = 1
-                print("recieved i")
-            elif char_in == "w":
-                calib_white.put(1)
-                state = 1
-            elif char_in == "y":
-                l_en = 1
-                r_en = 1
-                r_lin_spd = 200
-                l_lin_spd = 200
-                R_lin_speed.put(r_lin_spd)
-                L_lin_speed.put(l_lin_spd)
-                L_en.put(l_en)
-                R_en.put(r_en)
-
-                line_follow.put(1)
-                state = 1
-            elif char_in == "m":
+            # if char_in == "r":
+            #     r_lin_spd += 2
+            #     R_lin_speed.put(r_lin_spd)
+            #     state = 1
+            # elif char_in == "e":
+            #     r_lin_spd -= 10
+            #     R_lin_speed.put(r_lin_spd)
+            #     state = 1
+            # elif char_in == "c":
+            #     # print(r_en)
+            #     if r_en == 1:
+            #         r_en = 0
+            #     else:
+            #         r_en = 1
+            #     R_en.put(r_en)
+            #     state = 1
+            # elif char_in == "l":
+            #     l_lin_spd += 2
+            #     L_lin_speed.put(l_lin_spd)
+            #     state = 1
+            # elif char_in == "k":
+            #     l_lin_spd -= 10
+            #     L_lin_speed.put(l_lin_spd)
+            #     state = 1
+            # elif char_in == "n":
+            #     if l_en == 1:
+            #         l_en = 0
+            #     else:
+            #         l_en = 1
+            #     L_en.put(l_en)
+            #     state = 1
+            # elif char_in == "p":
+            #     uart.write("Left motor effort: ", l_lin_spd, "\nRight motor effort: ", r_lin_spd)
+            #     state = 1
+            # elif char_in == "b":
+            #     r_lin_spd = 100
+            #     l_lin_spd = 100
+            #     R_lin_speed.put(r_lin_spd)
+            #     L_lin_speed.put(l_lin_spd)
+            #     print("Hi")
+            #     state = 1
+            #
+            # elif char_in == "t":  # Run a test setting right and left speeds
+            #     r_en = 0
+            #     l_en = 0
+            #     R_en.put(r_en)
+            #     L_en.put(l_en)
+            #     l_lin_spd = 200
+            #     r_lin_spd = 200
+            #     L_lin_speed.put(l_lin_spd)
+            #     R_lin_speed.put(r_lin_spd)
+            #     # state = 1
+            #     Run.put(1)  # Indicates start to data collection
+            #     test_start_time = ticks_ms()  # Record start time of test
+            #     data_collect_comp_time = ticks_us()
+            #     test_start_time_share.put(data_collect_comp_time)
+            #     state = 3
+            #
+            # elif char_in == "z":
+            #     # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
+            #     if Print_out.get() != 1:
+            #         Print_out.put(1)
+            #         # print("Print_out set!")
+            #     state = 1
+            # elif char_in == "s":  # Run step response test, at whatever effort the right motor was last set to
+            #     uart.write("starting step reponse!______________")
+            #
+            #     r_en = 0
+            #     l_en = 0
+            #     R_en.put(r_en)
+            #     L_en.put(l_en)
+            #     l_lin_spd = r_lin_spd
+            #     L_lin_speed.put(l_lin_spd)
+            #     Run.put(1)  # Indicates start to data collection
+            #     test_start_time = ticks_ms()  # Record start time of test
+            #
+            #     state = 3
+            # elif char_in == "i":  # run black calibration sequence for IR sensor
+            #     calib_black.put(1)
+            #     state = 1
+            #     print("recieved i")
+            # elif char_in == "w":
+            #     calib_white.put(1)
+            #     state = 1
+            # elif char_in == "y":
+            #     l_en = 1
+            #     r_en = 1
+            #     r_lin_spd = 200
+            #     l_lin_spd = 200
+            #     R_lin_speed.put(r_lin_spd)
+            #     L_lin_speed.put(l_lin_spd)
+            #     L_en.put(l_en)
+            #     R_en.put(r_en)
+            #
+            #     line_follow.put(1)
+            #     state = 1
+            if char_in == "m":
                 uart.write("Reached")
                 start_pathing.put(1)
                 state = 1
