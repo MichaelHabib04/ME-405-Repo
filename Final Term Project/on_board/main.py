@@ -16,9 +16,10 @@ from machine import UART
 from IMU_I2C import IMU_I2C
 import os
 from ulab import numpy as np
-import math
+# import math
 from command import Command
 from micropython import const
+from math import cos, sin, acos, sqrt
 
 ser = USB_VCP()
 """! Setup for Bluetooth Module !"""
@@ -154,13 +155,13 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
     # E is the vector pointing from Romi's position to the target
     E_x = x_set - x_curr
     E_y = y_set - y_curr
-    # E_yaw = math.atan2(E_y, E_x) # atan2 output is between negative pi and pi
-    E_mag = math.sqrt(E_x * E_x + E_y * E_y)
+    # E_yaw = atan2(E_y, E_x) # atan2 output is between negative pi and pi
+    E_mag = sqrt(E_x * E_x + E_y * E_y)
     # C is the unit vector pointing in the current yaw direction
-    C_x = math.cos(yaw_curr)
-    C_y = math.sin(yaw_curr)
+    C_x = cos(yaw_curr)
+    C_y = sin(yaw_curr)
     # Theta is the angle between vectors, but is always positive
-    theta = math.acos((C_x * E_x + C_y * E_y) / E_mag)
+    theta = acos((C_x * E_x + C_y * E_y) / E_mag)
     cross = C_x * E_x - C_y * E_y
     # positive sign means theta is CCW, negative is CW
     # output is the angle FROM E to C
@@ -176,12 +177,11 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
     UI
     collect_data
     battery_read
-
     !"""
 
 def commander(shares):
     x_position, y_position, start_pathing, position_follow, line_follow, x_target, y_target, dist_from_target, distance_traveled_share, R_lin_spd, L_lin_spd = shares
-    _operations = [const(Command("pos", 1200, 200, 800, 800))]
+    _operations = [const(Command("pos", 100, 200, 800, 800))]
     op_ind = 0
     """
     ADD COMMAND OBJECTS TO THE LIST TO BE EXECUTED IN ORDER
@@ -214,8 +214,8 @@ def commander(shares):
             #     pass
             # elif curr_command.mode == "rev": # blind reverse mode
             #     pass
-            # R_lin_spd.put(curr_command.lin_speed)
-            # L_lin_spd.put(curr_command.lin_speed)
+            R_lin_spd.put(curr_command.lin_speed)
+            L_lin_spd.put(curr_command.lin_speed)
             state = 2
         elif state == 2:
             # check if the command has been fulfilled
@@ -223,7 +223,7 @@ def commander(shares):
             if curr_command.mode == "lin":  # line follower mode
                 done = curr_command.check_end_condition(distance_traveled_share.get())
             elif curr_command.mode == "pos":  # position follower mode
-                print(dist_from_target.get())
+                # print(dist_from_target.get())
                 done = curr_command.check_end_condition(dist_from_target.get())
             # elif curr_command.mode == 2: # bumper mode
             #
@@ -235,8 +235,6 @@ def commander(shares):
                 _operations.pop(0)  # remove command that has completed executing
                 state = 0
         yield state
-
-
 def bump_sensors(shares):
     r_velocity, l_velocity = shares
     state = 1
@@ -271,8 +269,6 @@ def PositionControl(shares):
                 position_controller.enable_integral_error()
                 state = 0
         yield state
-
-
 def IR_sensor(shares):
     global centroid_set_point
     calib_black, calib_white, line_follow, L_speed_share, R_speed_share, wheel_diff = shares
@@ -338,23 +334,18 @@ def IMU_OP(shares):
     wheel_radius = 35  # mm
     T_s = 0.05  # observer timestep in seconds
     # create state variables
-
     x_hat_old = np.array(np.zeros(4).reshape(4, ))
     x_hat_new = np.array(np.zeros(4).reshape(4, ))
     u_aug = np.array(np.zeros(6).reshape(6, ))
     y_measured = np.array(np.zeros(4).reshape(4, ))
     y_hat = np.array(np.zeros(4).reshape(4, ))
-
     # Set initial global coordinates
     global_coords = [0, 0]
     est_global_coords = [0, 0]
-
-
     # https://docs.micropython.org/en/latest/library/micropython.html#micropython.const
     _A_d = np.array(const(
         [0.499445, 0.499445, 0.001942, 0.002727, 0.499445, 0.499445, 0.001942, -0.002727, 0.285397, 0.285397, 0.001110,
          -0.000000, -0.000000, -0.000000, 0.000000, 1.000000])).reshape((4, 4)).transpose()
-
     _B_d = np.array(const([
         0.143168, 0.140021, 0.000545, 0.000765, 0.140021, 0.143168, 0.000545, -0.000765, -0.142699, -0.142699, 0.499445,
         0.000000, -0.142699, -0.142699, 0.499445, 0.000000, -0.000000, 0.000000,
@@ -389,9 +380,7 @@ def IMU_OP(shares):
                     print("IMU not calibrated for some reason")
                     print(cal_status)
                     state = 1
-
             else:
-
                 cal_bit = False
                 IMU.changeOpMode(full_sensor_fusion_op_mode)
                 while not cal_bit:
@@ -401,9 +390,7 @@ def IMU_OP(shares):
                     print(cal_status)
                     if (cal_status[1] == 3 and cal_status[2] == 3 and cal_status[3] == 3):
                         cal_bit = True
-
                 print("IMU Calibrated")
-
                 cal_data_bytes = IMU.retrieveCalCoefficients()
                 print(cal_data_bytes)
                 with open('IMU_cal.txt', 'wb') as f:  # 'wb' = write binary
@@ -416,24 +403,19 @@ def IMU_OP(shares):
             sleep_ms(200)
             Euler_offset = IMU.readEulerAngles()[0]  # update yaw angle (rad)
             # print(f"Offset: {Euler_offset}")
-
             y_measured[0] = L_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[1] = R_pos_share.get() * .153  # in encoder counts, converted to mm
             y_measured[2] = IMU.readEulerAngles()[0] - Euler_offset  # update yaw angle (rad)
             y_measured[3] = IMU.readAngularVelocity()[2]  # update yaw rate (rad/s)
-
             # Psi = Sr - Sl/w (use encoder values)
             y_measured[2] = (y_measured[1] - y_measured[0]) / robot_width
             heading_offset = y_measured[2]
-
             # u vector
             v_left = L_voltage_share.get()  # pwm effort converted to V in ops tasks
             v_right = R_voltage_share.get()
             # Create u* = u/y vector (vl, vr, sl, sr, psi, psi_dot)
             u_aug = np.concatenate((np.array([v_left, v_right]), y_measured))
             old_time = ticks_us()
-            print(L_vel_share.get())
-            print(R_vel_share.get())
             x_hat_old[0] = L_vel_share.get() * .153 / 35  # converted from counts/s to mm/s to radians per second
             x_hat_old[1] = R_vel_share.get() * .153 / 35  # converted from counts/s to mm/s to radians per second
             x_hat_old[2] = 0  # Romi has not travelled any linear distance yet
@@ -475,24 +457,24 @@ def IMU_OP(shares):
             dist_traveled_old = x_hat_old[2]
             x_hat_old = x_hat_new
             S_diff = x_hat_new[2] - dist_traveled_old
-            global_coords[0] = global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
+            global_coords[0] = global_coords[0] + S_diff * cos(-1 * y_measured[2])
             if y_measured[2] >= 3.14:
-                global_coords[1] = global_coords[1] + S_diff * math.sin(-1 * y_measured[2])
+                global_coords[1] = global_coords[1] + S_diff * sin(-1 * y_measured[2])
             else:
-                global_coords[1] = global_coords[1] + S_diff * math.sin(-1 * y_measured[2])
+                global_coords[1] = global_coords[1] + S_diff * sin(-1 * y_measured[2])
 
-            # print(f"Angle: {-1* y_measured[3]} sin value: {math.sin(-1* y_measured[3])} cos value: {math.cos(-1* y_measured[3])}" )
+            # print(f"Angle: {-1* y_measured[3]} sin value: {sin(-1* y_measured[3])} cos value: {cos(-1* y_measured[3])}" )
             # print(f"Psi: {y_measured[3]}, S: {x_hat_new[2]}")
             # global_coords = updateXY(global_coords[0], global_coords[1])
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
             # print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
             # use estimated states for the  position calculator
-            est_global_coords[0] = est_global_coords[0] + S_diff * math.cos(-1 * y_measured[2])
+            est_global_coords[0] = est_global_coords[0] + S_diff * cos(-1 * y_measured[2])
             if y_hat[2] >= 3.14:
-                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+                est_global_coords[1] = est_global_coords[1] + S_diff * sin(-1 * y_hat[2])
             else:
-                est_global_coords[1] = est_global_coords[1] + S_diff * math.sin(-1 * y_hat[2])
+                est_global_coords[1] = est_global_coords[1] + S_diff * sin(-1 * y_hat[2])
             # print(f"est_out: Sl {y_hat[0]} Sr {y_hat[1]} psi {y_hat[2]} psi_dot {y_hat[3]} X: {est_global_coords[0]}, Y: {est_global_coords[1]}")
             # print(f"x-coord: {est_global_coords[0]}, y-coord: {est_global_coords[1]}")
             x_position.get()
@@ -503,8 +485,6 @@ def IMU_OP(shares):
 
             state = 2
         yield state
-
-
 """
 
 AUTOMATICALLY UPDATES THE DIRECTION SHARE, ONLY SET EFFORT AND ENABLE SHARES:
@@ -544,7 +524,7 @@ def left_ops(shares):
                 left_target = left_base_target - follower_diff
             elif position_follower_on.get():  # implement the speed adjustment from the line follower task
                 follower_diff = wheel_diff.get() / 2
-                cl_ctrl_mot_left.set_target(left_base_target - follower_diff)
+                left_target = left_base_target - follower_diff
             else:
                 left_target = left_base_target
             cl_ctrl_mot_left.set_target(left_target)
@@ -604,7 +584,6 @@ def right_ops(shares):
 
 
 test_start_time = 0
-
 """!
 UI Task guide:
     r = increase right motor effort by 10
@@ -620,7 +599,6 @@ UI Task guide:
     x = print right queues
     t = configure for testing
     m = start pathing
-
 Motor step response test:
     Turns both motors off
     Sets both motor efforts to what the right motor effort currently is
@@ -628,8 +606,6 @@ Motor step response test:
     Turns both motors off (effort does not reset)
     Sets run share to start/stop data collection (data collection is not working)
 !"""
-
-
 def run_UI(shares):
     L_lin_speed, L_en, R_lin_speed, R_en, Run, Print_out, test_start_time_share, start_pathing = shares
     state = 0
@@ -697,7 +673,6 @@ def run_UI(shares):
             #     L_lin_speed.put(l_lin_spd)
             #     print("Hi")
             #     state = 1
-            #
             # elif char_in == "t":  # Run a test setting right and left speeds
             #     r_en = 0
             #     l_en = 0
@@ -713,7 +688,6 @@ def run_UI(shares):
             #     data_collect_comp_time = ticks_us()
             #     test_start_time_share.put(data_collect_comp_time)
             #     state = 3
-            #
             # elif char_in == "z":
             #     # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
             #     if Print_out.get() != 1:
@@ -722,7 +696,6 @@ def run_UI(shares):
             #     state = 1
             # elif char_in == "s":  # Run step response test, at whatever effort the right motor was last set to
             #     uart.write("starting step reponse!______________")
-            #
             #     r_en = 0
             #     l_en = 0
             #     R_en.put(r_en)
@@ -731,7 +704,6 @@ def run_UI(shares):
             #     L_lin_speed.put(l_lin_spd)
             #     Run.put(1)  # Indicates start to data collection
             #     test_start_time = ticks_ms()  # Record start time of test
-            #
             #     state = 3
             # elif char_in == "i":  # run black calibration sequence for IR sensor
             #     calib_black.put(1)
@@ -749,14 +721,13 @@ def run_UI(shares):
             #     L_lin_speed.put(l_lin_spd)
             #     L_en.put(l_en)
             #     R_en.put(r_en)
-            #
             #     line_follow.put(1)
             #     state = 1
             if char_in == "m":
-                uart.write("Reached")
+                # uart.write("Reached")
+                print("reached")
                 start_pathing.put(1)
                 state = 1
-
             else:
                 state = 1
         elif state == 3:  # Start data collection without running the motors so the start of the step response can be observed
@@ -880,9 +851,7 @@ def collect_data(shares):
             # print(r)
             # r = queue_to_list(RIGHT_VEL_Q)
             # print(r)
-
             # Step response output:
-
             size = 0
             # # uart.write(strR_EFF.get())
             # uart.write(f"RIGHT MOTOR: EFFORT = {R_EFF.get()}\r\n")

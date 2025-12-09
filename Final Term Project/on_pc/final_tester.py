@@ -75,7 +75,6 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     # ser.write(b"r\r\n")
     ser.write(b"m\r\n")
     print("sent!")
-    
 #
 #     while not ser.in_waiting: continue
 #
