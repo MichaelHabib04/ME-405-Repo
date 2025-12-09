@@ -17,6 +17,7 @@ from IMU_I2C import IMU_I2C
 import os
 from ulab import numpy as np
 import math
+from command import Command
 
 ser = USB_VCP()
 """! Setup for Bluetooth Module !"""
@@ -163,27 +164,77 @@ PB13 = Pin(Pin.cpu.B13, mode=Pin.IN, pull=Pin.PULL_UP) # For Left Bump Sensor
     
     !"""
 
-def pathing(shares):
-    l_velocity, r_velocity, x_position, y_position, distance_traveled_share, start_pathing, follower_on = shares
+
+def commander(shares):
+    x_position, y_position, start_pathing, position_follow, line_follow, x_target, y_target, course_start, dist_from_target, distance_traveled_share = shares
+    operations = []
+    """
+    ADD COMMAND OBJECTS TO THE LIST TO BE EXECUTED IN ORDER
+    
+    
+    """
+    operations.append(Command("pos", 25, 200, (800, 800)))
     state = 0
     while True:
         if state == 0:
-            #print(start_pathing.get())
-            if start_pathing.get():
-                state = 1
-        
+            if operations and course_start.get(): # check if commands list is empty
+               curr_command = operations[0]
+            else:
+                # stop moving Romi, since course is completed.
+                cl_ctrl_mot_left.target = 0
+                cl_ctrl_mot_right.target = 0
+            state = 1
         elif state == 1:
-            # centroid_set_point = -2
-            follower_on.put(1)
-            l_velocity.put(200)
-            r_velocity.put(200)
-            if x_position > 750:
-                state = 2
+            # parse command objects and set modes for tasks
+            if curr_command.mode == "lin": # line follower mode
+                line_follow.put(1)
+            elif curr_command.mode == "pos": # position follower mode
+                position_follow.put(1)
+                x_target.put(curr_command.coords[0])
+            #     y_target.put(curr_command.coords[1])
+            # elif curr_command.mode == 2: # bumper mode
+            #
+            # elif curr_command.mode == 3: # blind reverse mode
+            state = 2
         elif state == 2:
-            l_velocity.put(0)
-            r_velocity.put(0)
-            line_follow.put(0)
+            # check if the command has been fulfilled
+            done = 0
+            if curr_command.mode == "lin": # line follower mode
+                done = curr_command.check_end_condition(distance_traveled_share.get())
+            elif curr_command.mode == "pos": # position follower mode
+                done = curr_command.check_end_condition(dist_from_target.get())
+            # elif curr_command.mode == 2: # bumper mode
+            #
+            # elif curr_command.mode == 3: # blind reverse mode
+            if done:
+                position_follow.put(0)
+                line_follow.put(0)
+                operations.pop(0) # remove command that has completed executing
+                state = 0
         yield state
+
+
+# def pathing(shares):
+#     l_velocity, r_velocity, x_position, y_position, distance_traveled_share, start_pathing, follower_on = shares
+#     state = 0
+#     while True:
+#         if state == 0:
+#             #print(start_pathing.get())
+#             if start_pathing.get():
+#                 state = 1
+#
+#         elif state == 1:
+#             # centroid_set_point = -2
+#             follower_on.put(1)
+#             l_velocity.put(200)
+#             r_velocity.put(200)
+#             if x_position > 750:
+#                 state = 2
+#         elif state == 2:
+#             l_velocity.put(0)
+#             r_velocity.put(0)
+#             line_follow.put(0)
+#         yield state
 
 def bump_sensors(shares):
     r_velocity, l_velocity = shares
@@ -200,7 +251,7 @@ def bump_sensors(shares):
     
         yield state
 def PositionControl(shares):
-    x_position, y_position, start_pathing, IMU_time_share, yaw_angle_share = shares
+    x_position, y_position, start_pathing, IMU_time_share, yaw_angle_share, wheel_diff, dist_from_target, X_target, Y_target = shares
     def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set): #calculates difference between desired and real yaw
         # E is the vector pointing from Romi's position to the target
         E_x = x_set - x_curr
@@ -220,18 +271,25 @@ def PositionControl(shares):
     state = 0
     while True:
         if state == 0:
-            state = 1
+            if start_pathing.get():
+                position_controller.enable_integral_error()
+                position_controller.old_ticks = IMU_time_share.get()
+                state = 1
+            else:
+                state = 0
         elif state == 1:
-            state = 2
-        elif state == 2:
-            PC_ticks_new = IMU_time_share.get()  # timestamp sensor reading for controller
-            control_output_diff = position_controller.get_action(PC_ticks_new, yaw_error)
+            # timestamp sensor reading for controller
+            yaw_err, dist_to_checkpoint = yaw_error(x_position.get(), y_position.get(), yaw_angle_share.get(), X_target.get(), Y_target.get())
+            control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
             scaled_speed_diff = control_output_diff * 70
-            yaw_err, dist_to_checkpoint = yaw_error(x_position.get(), y_position.get(), yaw_angle_share.get(), )
-            # split the difference in wheel speeds evenly between the two wheels
-            wheel_diff.put(scaled_speed_diff, yaw_error)
-            print(
-                f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {control_output_diff}, scaled speed diff: {scaled_speed_diff}")
+            dist_from_target.put(dist_to_checkpoint) # used to check command completion in commander task
+            wheel_diff.put(scaled_speed_diff)
+            # print(f"Centroid: {ir_sensor_array.find_centroid()}, controller output: {control_output_diff}, scaled speed diff: {scaled_speed_diff}")
+            if not start_pathing.get():
+                state = 0
+            else:
+                state = 1
+        yield state
 
 
 
@@ -317,7 +375,7 @@ def IMU_OP(shares):
     global_coords = [0, 0]
     est_global_coords = [0, 0]
 
-    
+
     A_d = np.array(
         [0.499445, 0.499445, 0.001942, 0.002727, 0.499445, 0.499445, 0.001942, -0.002727, 0.285397, 0.285397, 0.001110,
          -0.000000, -0.000000, -0.000000, 0.000000, 1.000000]).reshape((4, 4)).transpose()
@@ -484,6 +542,9 @@ L_eff_share, L_en_share, R_eff_share, R_en_share
 
 """
 
+def garbage_collect(shares):
+    gc.collect()  # Run garbage collector so that it runs regularly
+    yield 0
 
 def left_ops(shares):
     print("LEFT OPS")
@@ -493,7 +554,6 @@ def left_ops(shares):
     global L_prev_dir, L_prev_eff, L_prev_en, L_t_start
     # State 0: init
     while True:
-        gc.collect()  # Run garbage collector so that it runs regularly
         if state == 0:  # initialize shares and vars
             mot_left.enable()
             left_encoder.zero()
@@ -959,6 +1019,10 @@ if __name__ == "__main__":
     X_coords_share = task_share.Share('f', thread_protect=False, name="X coordinate")
     Y_coords_share = task_share.Share('f', thread_protect=False, name="Y coordinate")
     start_pathing = task_share.Share('H', thread_protect=False, name="start pathing")
+    X_target = task_share.Share('f', thread_protect=False, name="X target")
+    Y_target = task_share.Share('f', thread_protect=False, name="Y target")
+    course_start = task_share.Share('H', thread_protect=False, name="course start")
+    dist_from_target = task_share.Share('f', thread_protect=False, name="distance from target")
 
     # R_pos_queue = task_share.Queue('f', 100, name="R pos")
     # R_vel_queue = task_share.Queue('f', 100, name="R vel")
@@ -981,8 +1045,6 @@ if __name__ == "__main__":
                                  profile=True, trace=True, shares=(R_lin_spd, R_en_share, R_pos_share, R_vel_share,
                                                                    R_time_share, wheel_diff, line_follow,
                                                                    R_voltage_share, position_follow))
-  
-
     task_ui = cotask.Task(run_UI, name="UI", priority=1, period=100,
                           profile=True, trace=True,
                           shares=(L_lin_spd, L_en_share, R_lin_spd, R_en_share, run, print_out, time_start_share))
@@ -1005,9 +1067,19 @@ if __name__ == "__main__":
 
     task_bump_sensor = cotask.Task(bump_sensors, name = "bump sensor Interrupt", priority=0, period = 20,
                                    profile=True, trace=True, shares = (R_lin_spd, L_lin_spd))
-    
-    task_pathing = cotask.Task(pathing, name = "Pathing", priority=0, period = 100, profile = True, trace=True,
-                               shares = (L_vel_share, R_vel_share, X_coords_share, Y_coords_share, dist_traveled_share, start_pathing, line_follow))
+    # task_pathing = cotask.Task(pathing, name = "Pathing", priority=0, period = 100, profile = True, trace=True,
+    #                            shares = (L_vel_share, R_vel_share, X_coords_share, Y_coords_share, dist_traveled_share, start_pathing, line_follow))
+    task_commander = cotask.Task(commander, name="Commander", priority=0, period=10, profile=True, trace=True,
+                               shares=(X_coords_share, Y_coords_share, start_pathing, position_follow,
+                                       line_follow, X_target, Y_target, course_start, dist_from_target, distance_traveled_share))
+
+
+    task_garbage_collect = cotask.Task(garbage_collect, name="Garbage collect", priority=0, period=5, profile=True, trace=True,
+                               shares=())
+    task_position_controller = cotask.Task(PositionControl, name="Commander", priority=0, period=10, profile=True, trace=True,
+                                 shares=( X_coords_share, Y_coords_share, start_pathing, IMU_time_share, yaw_angle_share, wheel_diff,
+                                        dist_from_target, X_target, Y_target))
+
     # cotask.task_list.append(task1)
     # cotask.task_list.append(task2)
 
@@ -1020,7 +1092,10 @@ if __name__ == "__main__":
     cotask.task_list.append(task_IR_sensor)
     cotask.task_list.append(task_state_estimator)
     cotask.task_list.append(task_bump_sensor)
-    cotask.task_list.append(task_pathing)
+    # cotask.task_list.append(task_pathing)
+    cotask.task_list.append(task_garbage_collect)
+    cotask.task_list.append(task_commander)
+    cotask.task_list.append(task_position_controller)
 
     # Run the memory garbage collector to ensure memory is as defragmented as
     # possible before the real-time scheduler is started
