@@ -6,7 +6,17 @@ class Encoder:
     '''A quadrature encoder decoding interface encapsulated in a Python class'''
 
     def __init__(self, tim, chA_pin, chB_pin):  # timer, and two Pin objects
-        '''Initializes an Encoder object'''
+        """
+        Initializes an Encoder object
+        
+        Args:
+            tim (pyb Timer object): Timer object with 2 timer channels available
+            chA_pin (pyb timerchannel): timerchannel initialized with timer from tim and corresponding pyb Pin object as determined by documentation
+            chB_pin (pyb timerchannel): timerchannel initialized with timer from tim and corresponding pyb Pin object as determined by documentation
+        Returns:
+            none
+        
+        """
         self.position = 0  # Total accumulated position of the encoder
         self.prev_count = 0  # Counter value from the most recent update
         self.delta = 0  # Change in count between last two updates
@@ -17,8 +27,13 @@ class Encoder:
         self.comp = (tim.period() + 1) // 2  # comparator equal to half of AR + 1
 
     def update(self):
-        '''Runs one update step on the encoder's timer counter to keep
-           track of the change in count and check for counter reload'''
+        """
+        Runs one update step on the encoder's timer counter to keep track of the change in count and check for counter reload
+        
+        Returns: 
+            none
+        
+        """
         ticks_new = ticks_us()
         enc_count_new = self.tim.counter()
         
@@ -48,18 +63,34 @@ class Encoder:
         pass
 
     def get_position(self):
-        '''Returns the most recently updated value of position as determined
-           within the update() method'''
+        """
+        Returns the most recently updated value of position as determined within the update() method
+        
+        Returns:
+            int:
+                Position of encoder in encoder ticks
+           
+        """
         return self.position * -1
 
     def get_velocity(self):
-        '''Returns a measure of velocity using the most recently updated
-           value of delta as determined within the update() method'''
+        """
+        Returns a measure of velocity using the most recently updated value of delta as determined within the update() method
+        
+        Returns:
+            float:
+                Velocity of encoder in ticks/s
+        """
         return (self.delta * -1) / (self.dt)
 
     def zero(self):
-        '''Sets the present encoder position to zero and causes future updates
-           to measure with respect to the new zero position'''
+        """
+        Sets the present encoder position to zero and causes future updates to measure with respect to the new zero position
+        
+        Returns:
+            none
+           
+        """
         self.position = 0
         self.enc_count_old = self.tim.counter()
         self.delta = 0

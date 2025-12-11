@@ -46,6 +46,11 @@ unit_sel_addr = 0x3B
 unit_sel = 0b010100 # sets angle units to rad instead of deg
 
 class IMU_I2C:
+    """
+    A class to interface with a BNO055 IMU using pyb I2C protocol in order to obtain angular velocity and acceleration data
+    
+    """
+    
     def __init__(self, I2Cobj, address): # Takes in I2C object configured in Controller mode
         """
         Initializes an IMU object using pyb I2C protocol
@@ -121,8 +126,7 @@ class IMU_I2C:
         Writes calibration coefficients to the IMU using previously recorded bianary data
         
         Args:
-            calFileTxt (String): referencing a .txt file stored on the board that contains pre-recorded calibration
-            coefficients
+            calFileTxt (String): referencing a .txt file stored on the board that contains pre-recorded calibration coefficients
         Returns:
             none
         """
