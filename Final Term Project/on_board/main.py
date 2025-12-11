@@ -198,11 +198,12 @@ def commander(shares):
     com_3 = Command("lin", 480, 100, 1250, 400)  # Line follow around half circle
     com_4 = Command("lin", 250, 200)  # quickly line follow through dashed lines
     com_5 = Command("lin", 1250, 150)  # quickly line follow through dashed lines
+    com_6 = Command("fwd", 300, 100)
 
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
     # _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
-    _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_end]
     # _operations = [Command("yaw", 1, 200, 300, 600), com_end]
     op_ind = 0
     t_start = 0
