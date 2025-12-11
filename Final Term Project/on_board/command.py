@@ -7,6 +7,7 @@ class Command():
         "pos" for position follower mode
         "bmp" for bump sensor mode
         "rev" for blind reverse mode 
+        "fwd: for forward mode
         """
         self.end_condition = end_condition
         """

@@ -159,11 +159,15 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
     C_x = cos(yaw_curr)
     C_y = sin(yaw_curr)
     # Theta is the angle between vectors, but is always positive
-    theta = acos((C_x * E_x + C_y * E_y) / E_mag)
-    cross = C_x * E_y - C_y * E_x
+    try:
+        theta = acos((C_x * E_x + C_y * E_y) / E_mag)
+    except:
+        theta = 0
+    cross = max(C_x * E_y - C_y * E_x, 0.001)
     # positive sign means theta is CCW, negative is CW
     # output is the angle FROM E to C
     sign = -1 * cross / abs(cross)
+    print("Error", theta)
     return theta * sign, E_mag
 
 
@@ -183,16 +187,22 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
 
 def commander(shares):
     x_position, y_position, start_pathing, position_follow, line_follow, x_target, y_target, dist_from_target, distance_traveled_share, R_lin_spd, L_lin_spd = shares
+    # com_1 = Command("lin", 930, 100, 720, 800)  # Line follow from start to first fork
     com_1 = Command("lin", 930, 100, 720, 800)  # Line follow from start to first fork
     # com_2 = Command("pos", 90, 200, 950, 425) # Move until past the first Y
     # com_2 = Command("yaw", .33, 200, 920, 600)  # Slightly adjust past first Y
     # com_2 = Command("pos", 0, 200, 800, 740) # Slightly adjust past first Y
     # com_3 = Command("lin", 170, 200, 950, 600)  # Line follow until Diamond
-    com_2 = Command("pos", 10, 200, 950, 450)  # position track to CP1
-    com_3 = Command("lin", 100, 400, 1250, 400)  # Line follow around half circle until dashed lines
+    # com_2 = Command("pos", 10, 200, 950, 450)  # position track to CP1
+    com_2 = Command("fwd", 100, 100)
+    com_3 = Command("lin", 480, 100, 1250, 400)  # Line follow around half circle
+    com_4 = Command("lin", 250, 200)  # quickly line follow through dashed lines
+    com_5 = Command("lin", 1250, 150)  # quickly line follow through dashed lines
+
+    # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
     # _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
-    _operations = [com_1, com_2, com_end] #, com_3, com_4, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
     # _operations = [Command("yaw", 1, 200, 300, 600), com_end]
     op_ind = 0
     t_start = 0
@@ -251,6 +261,15 @@ def commander(shares):
             elif curr_command.mode == "bmp":  # bumper mode
                 print("Parsed bumper mode")
                 line_follow.put(1)
+            elif curr_command.mode == "fwd":
+                # print("curr position: ", x_position.get(), y_position.get())
+                # print(curr_command.end_condition)
+                x_target.put(x_position.get() + curr_command.end_condition*cos(yaw_angle_share.get()))
+                y_target.put(y_position.get() + curr_command.end_condition*sin(yaw_angle_share.get()))
+                starting_dist_traveled = distance_traveled_share.get()
+                # print("goal: ", x_target.get(), y_target.get())
+
+                position_follow.put(1)
             # elif curr_command.mode == "rev": # blind reverse mode
             #     pass
             R_lin_spd.put(curr_command.lin_speed)
@@ -290,6 +309,9 @@ def commander(shares):
                 if not PB12.value() or not PB13.value():
                     done = 1
                     print("bumper pressed")
+            elif curr_command.mode == "fwd":
+                done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
+                print(f"{distance_traveled_share.get() - starting_dist_traveled}, {curr_command.end_condition}")
             if done:
                 op_ind += 1
                 position_follow.put(0)
@@ -298,7 +320,7 @@ def commander(shares):
                 R_lin_spd.put(0)
                 L_lin_spd.put(0)
                 # _operations.pop(0)  # remove command that has completed executing
-                print("Operation done, state 0")
+                print(f"Operation {op_ind + 1} done, state 0")
                 t_start = ticks_ms()
                 state = 3
         elif state == 3:
@@ -341,7 +363,7 @@ def PositionControl(shares):
             print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * 170
+            scaled_speed_diff = control_output_diff * 100
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
             if not position_follow.get():
@@ -391,7 +413,7 @@ def IR_sensor(shares):
         elif state == 3:
             ir_sensor_array.blacks = const([3206.13, 2983.14, 3063.67, 2910.69, 2800.52, 2930.22, 3063.97])
             ir_sensor_array.whites = const([360.62, 299.06, 297.68, 286.17, 281.66, 295.05, 316.05])
-            print("Line following now")
+            # print("Line following now")
             ir_controller.set_target(centroid_set_point)
             ir_sensor_array.array_read()
             ir_ticks_new = ticks_us()  # timestamp sensor reading for controller
