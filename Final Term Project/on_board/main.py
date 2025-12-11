@@ -159,11 +159,15 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
     C_x = cos(yaw_curr)
     C_y = sin(yaw_curr)
     # Theta is the angle between vectors, but is always positive
-    theta = acos((C_x * E_x + C_y * E_y) / E_mag)
-    cross = C_x * E_y - C_y * E_x
+    try:
+        theta = acos((C_x * E_x + C_y * E_y) / E_mag)
+    except:
+        theta = 0
+    cross = max(C_x * E_y - C_y * E_x, 0.001)
     # positive sign means theta is CCW, negative is CW
     # output is the angle FROM E to C
     sign = -1 * cross / abs(cross)
+    # print("Error", theta)
     return theta * sign, E_mag
 
 
@@ -183,16 +187,23 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
 
 def commander(shares):
     x_position, y_position, start_pathing, position_follow, line_follow, x_target, y_target, dist_from_target, distance_traveled_share, R_lin_spd, L_lin_spd = shares
+    # com_1 = Command("lin", 930, 100, 720, 800)  # Line follow from start to first fork
     com_1 = Command("lin", 930, 100, 720, 800)  # Line follow from start to first fork
     # com_2 = Command("pos", 90, 200, 950, 425) # Move until past the first Y
     # com_2 = Command("yaw", .33, 200, 920, 600)  # Slightly adjust past first Y
     # com_2 = Command("pos", 0, 200, 800, 740) # Slightly adjust past first Y
     # com_3 = Command("lin", 170, 200, 950, 600)  # Line follow until Diamond
-    com_2 = Command("pos", 10, 200, 950, 450)  # position track to CP1
-    com_3 = Command("lin", 100, 400, 1250, 400)  # Line follow around half circle until dashed lines
+    # com_2 = Command("pos", 10, 200, 950, 450)  # position track to CP1
+    com_2 = Command("fwd", 100, 100)
+    com_3 = Command("lin", 480, 100, 1250, 400)  # Line follow around half circle
+    com_4 = Command("lin", 250, 200)  # quickly line follow through dashed lines
+    com_5 = Command("lin", 1250, 150)  # quickly line follow through dashed lines
+    com_6 = Command("fwd", 300, 100)
+
+    # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
     # _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
-    _operations = [com_1, com_2, com_end] #, com_3, com_4, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_end]
     # _operations = [Command("yaw", 1, 200, 300, 600), com_end]
     op_ind = 0
     t_start = 0
@@ -251,6 +262,15 @@ def commander(shares):
             elif curr_command.mode == "bmp":  # bumper mode
                 print("Parsed bumper mode")
                 line_follow.put(1)
+            elif curr_command.mode == "fwd":
+                # print("curr position: ", x_position.get(), y_position.get())
+                # print(curr_command.end_condition)
+                x_target.put(x_position.get() + curr_command.end_condition*cos(yaw_angle_share.get()))
+                y_target.put(y_position.get() + curr_command.end_condition*sin(yaw_angle_share.get()))
+                starting_dist_traveled = distance_traveled_share.get()
+                # print("goal: ", x_target.get(), y_target.get())
+
+                position_follow.put(1)
             # elif curr_command.mode == "rev": # blind reverse mode
             #     pass
             R_lin_spd.put(curr_command.lin_speed)
@@ -290,6 +310,9 @@ def commander(shares):
                 if not PB12.value() or not PB13.value():
                     done = 1
                     print("bumper pressed")
+            elif curr_command.mode == "fwd":
+                done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
+                print(f"{distance_traveled_share.get() - starting_dist_traveled}, {curr_command.end_condition}")
             if done:
                 op_ind += 1
                 position_follow.put(0)
@@ -298,7 +321,7 @@ def commander(shares):
                 R_lin_spd.put(0)
                 L_lin_spd.put(0)
                 # _operations.pop(0)  # remove command that has completed executing
-                print("Operation done, state 0")
+                print(f"Operation {op_ind + 1} done, state 0")
                 t_start = ticks_ms()
                 state = 3
         elif state == 3:
@@ -341,7 +364,7 @@ def PositionControl(shares):
             print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * 170
+            scaled_speed_diff = control_output_diff * 100
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
             if not position_follow.get():
@@ -391,7 +414,7 @@ def IR_sensor(shares):
         elif state == 3:
             ir_sensor_array.blacks = const([3206.13, 2983.14, 3063.67, 2910.69, 2800.52, 2930.22, 3063.97])
             ir_sensor_array.whites = const([360.62, 299.06, 297.68, 286.17, 281.66, 295.05, 316.05])
-            print("Line following now")
+            # print("Line following now")
             ir_controller.set_target(centroid_set_point)
             ir_sensor_array.array_read()
             ir_ticks_new = ticks_us()  # timestamp sensor reading for controller
@@ -717,97 +740,6 @@ def run_UI(shares):
                 char_in = uart.read(1).decode()
                 state = 2
         elif state == 2:  # decode character
-            # if char_in == "r":
-            #     r_lin_spd += 2
-            #     R_lin_speed.put(r_lin_spd)
-            #     state = 1
-            # elif char_in == "e":
-            #     r_lin_spd -= 10
-            #     R_lin_speed.put(r_lin_spd)
-            #     state = 1
-            # elif char_in == "c":
-            #     # print(r_en)
-            #     if r_en == 1:
-            #         r_en = 0
-            #     else:
-            #         r_en = 1
-            #     R_en.put(r_en)
-            #     state = 1
-            # elif char_in == "l":
-            #     l_lin_spd += 2
-            #     L_lin_speed.put(l_lin_spd)
-            #     state = 1
-            # elif char_in == "k":
-            #     l_lin_spd -= 10
-            #     L_lin_speed.put(l_lin_spd)
-            #     state = 1
-            # elif char_in == "n":
-            #     if l_en == 1:
-            #         l_en = 0
-            #     else:
-            #         l_en = 1
-            #     L_en.put(l_en)
-            #     state = 1
-            # elif char_in == "p":
-            #     uart.write("Left motor effort: ", l_lin_spd, "\nRight motor effort: ", r_lin_spd)
-            #     state = 1
-            # elif char_in == "b":
-            #     r_lin_spd = 100
-            #     l_lin_spd = 100
-            #     R_lin_speed.put(r_lin_spd)
-            #     L_lin_speed.put(l_lin_spd)
-            #     print("Hi")
-            #     state = 1
-            # elif char_in == "t":  # Run a test setting right and left speeds
-            #     r_en = 0
-            #     l_en = 0
-            #     R_en.put(r_en)
-            #     L_en.put(l_en)
-            #     l_lin_spd = 200
-            #     r_lin_spd = 200
-            #     L_lin_speed.put(l_lin_spd)
-            #     R_lin_speed.put(r_lin_spd)
-            #     # state = 1
-            #     Run.put(1)  # Indicates start to data collection
-            #     test_start_time = ticks_ms()  # Record start time of test
-            #     data_collect_comp_time = ticks_us()
-            #     test_start_time_share.put(data_collect_comp_time)
-            #     state = 3
-            # elif char_in == "z":
-            #     # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
-            #     if Print_out.get() != 1:
-            #         Print_out.put(1)
-            #         # print("Print_out set!")
-            #     state = 1
-            # elif char_in == "s":  # Run step response test, at whatever effort the right motor was last set to
-            #     uart.write("starting step reponse!______________")
-            #     r_en = 0
-            #     l_en = 0
-            #     R_en.put(r_en)
-            #     L_en.put(l_en)
-            #     l_lin_spd = r_lin_spd
-            #     L_lin_speed.put(l_lin_spd)
-            #     Run.put(1)  # Indicates start to data collection
-            #     test_start_time = ticks_ms()  # Record start time of test
-            #     state = 3
-            # elif char_in == "i":  # run black calibration sequence for IR sensor
-            #     calib_black.put(1)
-            #     state = 1
-            #     print("recieved i")
-            # elif char_in == "w":
-            #     calib_white.put(1)
-            #     state = 1
-            # elif char_in == "y":
-            #     l_en = 1
-            #     r_en = 1
-            #     r_lin_spd = 200
-            #     l_lin_spd = 200
-            #     R_lin_speed.put(r_lin_spd)
-            #     L_lin_speed.put(l_lin_spd)
-            #     L_en.put(l_en)
-            #     R_en.put(r_en)
-            #     line_follow.put(1)
-            #     state = 1
             if char_in == "m":
                 # uart.write("Reached")
                 print("reached")
@@ -1039,6 +971,7 @@ if __name__ == "__main__":
     Y_target = task_share.Share('f', thread_protect=False, name="Y target")
     dist_from_target = task_share.Share('f', thread_protect=False, name="distance from target")
 
+    gc.collect()
     # Create the tasks. If trace is enabled for any task, memory will be
     # allocated for state transition tracing, and the application will run out
     # of memory after a while and quit. Therefore, use tracing only for
@@ -1055,11 +988,11 @@ if __name__ == "__main__":
     task_ui = cotask.Task(run_UI, name="UI", priority=1, period=100,
                           profile=True, trace=False,
                           shares=(L_lin_spd, R_lin_spd, run, print_out, time_start_share, start_pathing))
-    task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=20,
-                                    profile=True, trace=False, shares=(
-            R_lin_spd, L_lin_spd, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share,
-            yaw_angle_share, yaw_rate_share, IMU_time_share, dist_traveled_share, X_coords_share, Y_coords_share, run,
-            print_out))
+    # task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=20,
+    #                                 profile=True, trace=False, shares=(
+    #         R_lin_spd, L_lin_spd, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share,
+    #         yaw_angle_share, yaw_rate_share, IMU_time_share, dist_traveled_share, X_coords_share, Y_coords_share, run,
+    #         print_out))
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=2000,
                                     profile=True, trace=False, shares=(bat_share, bat_flag))
     task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=0, period=50,
@@ -1079,11 +1012,12 @@ if __name__ == "__main__":
                                                    yaw_angle_share, wheel_diff,
                                                    dist_from_target, X_target, Y_target))
 
+    gc.collect()
     # Add tasks to task list to run in scheduler
     cotask.task_list.append(task_left_ops)
     cotask.task_list.append(task_right_ops)
     cotask.task_list.append(task_ui)
-    cotask.task_list.append(task_collect_data)
+    # cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
     cotask.task_list.append(task_IR_sensor)
     cotask.task_list.append(task_state_estimator)
