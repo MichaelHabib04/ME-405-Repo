@@ -186,7 +186,7 @@ def commander(shares):
     com_2 = Command("yaw", .33, 200, 920, 600) # Slightly adjust past first Y
     # com_2 = Command("pos", 0, 200, 800, 740) # Slightly adjust past first Y
     com_3 = Command("lin", 170, 200, 950, 600) # Line follow until Diamond
-    com_4 = Command("pos", 0, 200, 950, 425) # position track to CP1
+    com_4 = Command("pos", 0, 200, 950, 450) # position track to CP1
     com_5 = Command("lin", 200, 400, 1250, 400) # Line follow around half circle until dashed lines
     
     com_end = Command("lin", 0, 0, 0, 0) # Command that is the last one so that Romi stops
@@ -1043,7 +1043,7 @@ if __name__ == "__main__":
             print_out))
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=2000,
                                     profile=True, trace=False, shares=(bat_share, bat_flag))
-    task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=0, period=30,
+    task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=0, period=50,
                                  profile=True, trace=False,
                                  shares=(calib_black, calib_white, line_follow, L_lin_spd, R_lin_spd, wheel_diff))
     task_state_estimator = cotask.Task(IMU_OP, name="state estimator", priority=10, period=50,
@@ -1052,11 +1052,11 @@ if __name__ == "__main__":
             yaw_rate_share, dist_traveled_share, IMU_time_share, time_start_share, X_coords_share, Y_coords_share))
     task_bump_sensor = cotask.Task(bump_sensors, name="bump sensor", priority=0, period=20,
                                    profile=True, trace=False, shares=(R_lin_spd, L_lin_spd))
-    task_commander = cotask.Task(commander, name="Commander", priority=0, period=10, profile=True, trace=False,
+    task_commander = cotask.Task(commander, name="Commander", priority=0, period=20, profile=True, trace=False,
                                  shares=(X_coords_share, Y_coords_share, start_pathing, position_follow,
                                          line_follow, X_target, Y_target, dist_from_target,
                                          dist_traveled_share, R_lin_spd, L_lin_spd))
-    task_position_controller = cotask.Task(PositionControl, name="Pos CTRL", priority=0, period=10, profile=True,
+    task_position_controller = cotask.Task(PositionControl, name="Pos CTRL", priority=0, period=20, profile=True,
                                            trace=False,
                                            shares=(X_coords_share, Y_coords_share, position_follow, IMU_time_share,
                                                    yaw_angle_share, wheel_diff,
