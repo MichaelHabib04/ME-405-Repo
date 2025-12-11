@@ -1,6 +1,10 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath(".."))
+# sys.path.insert(0, os.path.abspath(".."))
+
+# Add the on_board folder so modules like boot, main, etc. can be imported
+sys.path.insert(0, os.path.abspath("../Final Term Project/on_board"))
+
 
 
 

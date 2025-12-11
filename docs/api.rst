@@ -1,7 +1,50 @@
 API Reference
 =============
 
-.. automodule:: Final Term Project-on_board-main
+API Reference
+=============
+
+.. automodule:: boot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: command
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: Encoder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: IMU_I2C
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: ir_sensor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: main
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: motor_driver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sensor_array
    :members:
    :undoc-members:
    :show-inheritance:
