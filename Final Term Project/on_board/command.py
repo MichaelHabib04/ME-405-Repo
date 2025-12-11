@@ -4,7 +4,6 @@ class Command():
     
     """
     def __init__(self, mode: str, end_condition: float, lin_speed: float, x_coord=0, y_coord=0):
-        self.mode = mode
         """
         Initializes an object to execute a pathing command
         
@@ -28,6 +27,8 @@ class Command():
             Position follower mode: distance between Romi's current position and the target coordinates
             Blind reverse mode:linear distance travelled in mm (s)
         """
+        
+        self.mode = mode
         self.end_condition = end_condition
         self.x_coord = x_coord #X coordinate. Can be ignored for modes other than 1
         self.y_coord = y_coord #Y coordinate. Can be ignored for modes other than 1
