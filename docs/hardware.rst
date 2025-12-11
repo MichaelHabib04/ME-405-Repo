@@ -19,7 +19,7 @@ On Board Code Hello Hello
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: IMU_I2C
+.. autoclass:: IMU_I2C
    :members: IMU_I2C
    :undoc-members:
    :show-inheritance:
