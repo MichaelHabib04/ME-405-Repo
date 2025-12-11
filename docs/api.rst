@@ -4,10 +4,6 @@ API Reference
 API Reference
 =============
 
-.. automodule:: boot
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 .. automodule:: command
    :members:
