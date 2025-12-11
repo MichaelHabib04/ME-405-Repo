@@ -167,7 +167,7 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
     # positive sign means theta is CCW, negative is CW
     # output is the angle FROM E to C
     sign = -1 * cross / abs(cross)
-    print("Error", theta)
+    # print("Error", theta)
     return theta * sign, E_mag
 
 
@@ -740,97 +740,6 @@ def run_UI(shares):
                 char_in = uart.read(1).decode()
                 state = 2
         elif state == 2:  # decode character
-            # if char_in == "r":
-            #     r_lin_spd += 2
-            #     R_lin_speed.put(r_lin_spd)
-            #     state = 1
-            # elif char_in == "e":
-            #     r_lin_spd -= 10
-            #     R_lin_speed.put(r_lin_spd)
-            #     state = 1
-            # elif char_in == "c":
-            #     # print(r_en)
-            #     if r_en == 1:
-            #         r_en = 0
-            #     else:
-            #         r_en = 1
-            #     R_en.put(r_en)
-            #     state = 1
-            # elif char_in == "l":
-            #     l_lin_spd += 2
-            #     L_lin_speed.put(l_lin_spd)
-            #     state = 1
-            # elif char_in == "k":
-            #     l_lin_spd -= 10
-            #     L_lin_speed.put(l_lin_spd)
-            #     state = 1
-            # elif char_in == "n":
-            #     if l_en == 1:
-            #         l_en = 0
-            #     else:
-            #         l_en = 1
-            #     L_en.put(l_en)
-            #     state = 1
-            # elif char_in == "p":
-            #     uart.write("Left motor effort: ", l_lin_spd, "\nRight motor effort: ", r_lin_spd)
-            #     state = 1
-            # elif char_in == "b":
-            #     r_lin_spd = 100
-            #     l_lin_spd = 100
-            #     R_lin_speed.put(r_lin_spd)
-            #     L_lin_speed.put(l_lin_spd)
-            #     print("Hi")
-            #     state = 1
-            # elif char_in == "t":  # Run a test setting right and left speeds
-            #     r_en = 0
-            #     l_en = 0
-            #     R_en.put(r_en)
-            #     L_en.put(l_en)
-            #     l_lin_spd = 200
-            #     r_lin_spd = 200
-            #     L_lin_speed.put(l_lin_spd)
-            #     R_lin_speed.put(r_lin_spd)
-            #     # state = 1
-            #     Run.put(1)  # Indicates start to data collection
-            #     test_start_time = ticks_ms()  # Record start time of test
-            #     data_collect_comp_time = ticks_us()
-            #     test_start_time_share.put(data_collect_comp_time)
-            #     state = 3
-            # elif char_in == "z":
-            #     # print("Z pressed! Print out: ", Print_out.get(), " Run: ", Run.get())
-            #     if Print_out.get() != 1:
-            #         Print_out.put(1)
-            #         # print("Print_out set!")
-            #     state = 1
-            # elif char_in == "s":  # Run step response test, at whatever effort the right motor was last set to
-            #     uart.write("starting step reponse!______________")
-            #     r_en = 0
-            #     l_en = 0
-            #     R_en.put(r_en)
-            #     L_en.put(l_en)
-            #     l_lin_spd = r_lin_spd
-            #     L_lin_speed.put(l_lin_spd)
-            #     Run.put(1)  # Indicates start to data collection
-            #     test_start_time = ticks_ms()  # Record start time of test
-            #     state = 3
-            # elif char_in == "i":  # run black calibration sequence for IR sensor
-            #     calib_black.put(1)
-            #     state = 1
-            #     print("recieved i")
-            # elif char_in == "w":
-            #     calib_white.put(1)
-            #     state = 1
-            # elif char_in == "y":
-            #     l_en = 1
-            #     r_en = 1
-            #     r_lin_spd = 200
-            #     l_lin_spd = 200
-            #     R_lin_speed.put(r_lin_spd)
-            #     L_lin_speed.put(l_lin_spd)
-            #     L_en.put(l_en)
-            #     R_en.put(r_en)
-            #     line_follow.put(1)
-            #     state = 1
             if char_in == "m":
                 # uart.write("Reached")
                 print("reached")
@@ -1062,6 +971,7 @@ if __name__ == "__main__":
     Y_target = task_share.Share('f', thread_protect=False, name="Y target")
     dist_from_target = task_share.Share('f', thread_protect=False, name="distance from target")
 
+    gc.collect()
     # Create the tasks. If trace is enabled for any task, memory will be
     # allocated for state transition tracing, and the application will run out
     # of memory after a while and quit. Therefore, use tracing only for
@@ -1078,11 +988,11 @@ if __name__ == "__main__":
     task_ui = cotask.Task(run_UI, name="UI", priority=1, period=100,
                           profile=True, trace=False,
                           shares=(L_lin_spd, R_lin_spd, run, print_out, time_start_share, start_pathing))
-    task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=20,
-                                    profile=True, trace=False, shares=(
-            R_lin_spd, L_lin_spd, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share,
-            yaw_angle_share, yaw_rate_share, IMU_time_share, dist_traveled_share, X_coords_share, Y_coords_share, run,
-            print_out))
+    # task_collect_data = cotask.Task(collect_data, name="Collect Data", priority=0, period=20,
+    #                                 profile=True, trace=False, shares=(
+    #         R_lin_spd, L_lin_spd, R_pos_share, R_vel_share, R_time_share, L_pos_share, L_vel_share, L_time_share,
+    #         yaw_angle_share, yaw_rate_share, IMU_time_share, dist_traveled_share, X_coords_share, Y_coords_share, run,
+    #         print_out))
     task_read_battery = cotask.Task(battery_read, name="Battery", priority=0, period=2000,
                                     profile=True, trace=False, shares=(bat_share, bat_flag))
     task_IR_sensor = cotask.Task(IR_sensor, name="IR sensor", priority=0, period=50,
@@ -1102,11 +1012,12 @@ if __name__ == "__main__":
                                                    yaw_angle_share, wheel_diff,
                                                    dist_from_target, X_target, Y_target))
 
+    gc.collect()
     # Add tasks to task list to run in scheduler
     cotask.task_list.append(task_left_ops)
     cotask.task_list.append(task_right_ops)
     cotask.task_list.append(task_ui)
-    cotask.task_list.append(task_collect_data)
+    # cotask.task_list.append(task_collect_data)
     cotask.task_list.append(task_read_battery)
     cotask.task_list.append(task_IR_sensor)
     cotask.task_list.append(task_state_estimator)
