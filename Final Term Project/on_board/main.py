@@ -183,19 +183,21 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
 
 def commander(shares):
     x_position, y_position, start_pathing, position_follow, line_follow, x_target, y_target, dist_from_target, distance_traveled_share, R_lin_spd, L_lin_spd = shares
-    com_1 = Command("lin", 964, 100, 720, 800)  # Line follow from start to first fork
+    com_1 = Command("lin", 930, 100, 720, 800)  # Line follow from start to first fork
     # com_2 = Command("pos", 90, 200, 950, 425) # Move until past the first Y
-    com_2 = Command("yaw", .33, 200, 920, 600)  # Slightly adjust past first Y
+    # com_2 = Command("yaw", .33, 200, 920, 600)  # Slightly adjust past first Y
     # com_2 = Command("pos", 0, 200, 800, 740) # Slightly adjust past first Y
-    com_3 = Command("lin", 170, 200, 950, 600)  # Line follow until Diamond
-    com_4 = Command("pos", 0, 200, 950, 450)  # position track to CP1
-    com_5 = Command("lin", 200, 400, 1250, 400)  # Line follow around half circle until dashed lines
-
+    # com_3 = Command("lin", 170, 200, 950, 600)  # Line follow until Diamond
+    com_2 = Command("pos", 10, 200, 950, 450)  # position track to CP1
+    com_3 = Command("lin", 100, 400, 1250, 400)  # Line follow around half circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
     # _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
-    _operations = [com_1, com_2, com_3, com_4, com_end]
+    _operations = [com_1, com_2, com_end] #, com_3, com_4, com_end]
     # _operations = [Command("yaw", 1, 200, 300, 600), com_end]
     op_ind = 0
+    t_start = 0
+    t_curr = 0
+    _pause_time = const(200)
     """
     ADD COMMAND OBJECTS TO THE LIST TO BE EXECUTED IN ORDER
     """
@@ -264,14 +266,14 @@ def commander(shares):
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
                 print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
             elif curr_command.mode == "pos":  # position follower mode
-                # print("position control mode in command task")
+                print("position control mode in command task")
                 # print(dist_from_target.get())
                 done = curr_command.check_end_condition(dist_from_target.get())
                 # Will stop romi if it misses the target
-                if old_dist_to_checkpoint < dist_from_target.get():
-                    done = 1
-                    print("stopped because checkpoint was not reached")
-                old_dist_to_checkpoint = dist_from_target.get()
+                # if old_dist_to_checkpoint < dist_from_target.get():
+                # done = 1
+                # old_dist_to_checkpoint = dist_from_target.get()
+                print("position reached")
             elif curr_command.mode == "yaw":  # position follower mode, prioritize yaw diff
                 # print("position control mode in command task")
                 # print(dist_from_target.get())
@@ -292,8 +294,16 @@ def commander(shares):
                 op_ind += 1
                 position_follow.put(0)
                 line_follow.put(0)
+                wheel_diff.put(0)
+                R_lin_spd.put(0)
+                L_lin_spd.put(0)
                 # _operations.pop(0)  # remove command that has completed executing
                 print("Operation done, state 0")
+                t_start = ticks_ms()
+                state = 3
+        elif state == 3:
+            t_curr = ticks_ms()
+            if ticks_diff(t_curr, t_start) >= _pause_time:
                 state = 0
         yield state
 

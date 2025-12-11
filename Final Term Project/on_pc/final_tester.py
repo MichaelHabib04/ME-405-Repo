@@ -9,7 +9,7 @@ times = []
 data = []
 
 # ComPort = "/dev/tty.usbmodem2058397458562"   # For MacOS, will need to change if board is reflashed
-ComPort = "COM14" #COM14, COM5 for Kather ine
+ComPort = "COM14" #COM14, COM5 for Katherine`
 
 
 # If ComPort is different on Windows, add here, and then comment/uncomment which one to use
@@ -69,7 +69,7 @@ with Serial(ComPort, baudrate=115_200, timeout=1) as ser:
     #
     sleep(3)
     #
-    # ser.write(b"e\r\n")
+    # ser.write(b"e\r\n")x
     # ser.write(b"k\r\n")
 
     # ser.write(b"r\r\n")
