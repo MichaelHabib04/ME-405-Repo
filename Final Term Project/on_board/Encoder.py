@@ -3,7 +3,10 @@ from pyb import Timer, Pin
 
 
 class Encoder:
-    '''A quadrature encoder decoding interface encapsulated in a Python class'''
+    """
+    A quadrature encoder decoding interface encapsulated in a Python class
+    
+    """
 
     def __init__(self, tim, chA_pin, chB_pin):  # timer, and two Pin objects
         """
