@@ -94,9 +94,9 @@ channels = [ir_ch1, ir_ch3, ir_ch5, ir_ch7, ir_ch9, ir_ch11, ir_ch13]
 ir_sensor_array = sensor_array(channels, 4, 8)
 
 # Setup IR Sensor controller
-centroid_set_point = 0
+centroid_set_point = -1.5
 
-ir_controller = IRController(centroid_set_point, 0, 0, K3=1, Kp=1, Ki=0)
+ir_controller = IRController(centroid_set_point, 0, 0, K3=1, Kp=1.3, Ki=0)
 position_controller = PositionController(0, 0, 0, K3=1, Kp=1, Ki=1)
 
 """! Setup for IMU !"""
@@ -183,7 +183,7 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
 
 def commander(shares):
     x_position, y_position, start_pathing, position_follow, line_follow, x_target, y_target, dist_from_target, distance_traveled_share, R_lin_spd, L_lin_spd = shares
-    com_1 = Command("lin", 620, 200, 720, 800)  # Line follow from start to first fork
+    com_1 = Command("lin", 964, 100, 720, 800)  # Line follow from start to first fork
     # com_2 = Command("pos", 90, 200, 950, 425) # Move until past the first Y
     com_2 = Command("yaw", .33, 200, 920, 600)  # Slightly adjust past first Y
     # com_2 = Command("pos", 0, 200, 800, 740) # Slightly adjust past first Y
@@ -538,7 +538,7 @@ def IMU_OP(shares):
             # global_coords = updateXY(global_coords[0], global_coords[1])
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
-            print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
+            # print(f"x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
             # use estimated states for the  position calculator
             est_global_coords[0] = est_global_coords[0] + S_diff * cos(-1 * y_measured[2])
             if y_hat[2] >= 3.14:
@@ -820,7 +820,7 @@ def run_UI(shares):
 
                 state = 1
                 Run.put(0)  # indicates stop to data collection
-                uart.write("STOP STEP RESPONSE______________")
+                # uart.write("STOP STEP RESPONSE______________")
         yield state
 
 
@@ -914,7 +914,7 @@ def collect_data(shares):
                 state = 1
         # outputting data state
         elif state == 3:
-            uart.write("OUTPUTTING TRIAL DATA _____________________________ \r\n")
+            # uart.write("OUTPUTTING TRIAL DATA _____________________________ \r\n")
             # r = queue_to_list(R_TIME_Q)
             # size = len(r)
             # print(r)
