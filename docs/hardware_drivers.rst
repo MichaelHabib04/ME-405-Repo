@@ -23,12 +23,13 @@ Encoder
 
 
 IMU
-----
+---
 
 .. automodule:: IMU_I2C
    :members: IMU_I2C
    :undoc-members:
    :show-inheritance:
+   :exclude-members: eul_head_lsb, gyr_data_x_lsb, acc_data_x_lsb, op_mode_addr, calib_stat_addr, calib_coeff_addr, unit_sel_addr, unit_sel, config_op_mode, IMU_op_mode, compass_mode, m4g_mode, ndof_fmc_off_mode, ndof, full_sensor_fusion_op_mode
 
 
 IR Sensor

@@ -29,14 +29,6 @@ class Command():
         """
         
         self.mode = mode
-        """
-        modes: 
-        "lin" for line follower mode
-        "pos" for position follower mode
-        "bmp" for bump sensor mode
-        "rev" for blind reverse mode 
-        "fwd: for forward mode
-        """
         self.end_condition = end_condition
         self.x_coord = x_coord #X coordinate. Can be ignored for modes other than 1
         self.y_coord = y_coord #Y coordinate. Can be ignored for modes other than 1
