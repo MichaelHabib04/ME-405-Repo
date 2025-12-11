@@ -56,8 +56,8 @@ class IMU_I2C:
         Initializes an IMU object using pyb I2C protocol
         
         Args:
-            I2Cobj: pyb I2C object configured in controller mode
-            address: operating address of IMU peripheral
+            I2Cobj (pyb I2C object): pyb I2C object configured in controller mode
+            address (int): operating address of IMU peripheral
         Returns:
             none
         """
@@ -72,9 +72,7 @@ class IMU_I2C:
         
         Args: 
             mode (int): byte to write to the IMU's operating mode byte
-                operating modes used:
-                    config_op_mode = 0b0000 
-                    full_sensor_fusion_op_mode = 0x0C 
+                
         Returns:
             none
         """
