@@ -11,6 +11,7 @@ Command
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: ticks_diff
 
 Controller
 -----------
