@@ -14,22 +14,26 @@ op_mode_addr = 0x3D # Page 70 of the BNO055 data sheet
 calib_stat_addr = 0x35 # Pg 67, Calibration Status Byte
 calib_coeff_addr = 0x55 # Pg 50, Calibration Coefficients Starting Address
 eul_head_lsb = 0x1A #Pg 52, Heading for Euler angle Starting Address
-"""!
-Calibration Status Byte bit map;
-3 indicates fully calibrated, 0 indicates not calibrated
 
-Bit 0 and 1 - Mag calib status
-Bit 2 and 3 - Acc
-Bit 4 and 5 - Gyr
-Bit 6 and 7 - Sys
 
-!"""
+# """!
+# Calibration Status Byte bit map;
+# 3 indicates fully calibrated, 0 indicates not calibrated
+
+# Bit 0 and 1 - Mag calib status
+# Bit 2 and 3 - Acc
+# Bit 4 and 5 - Gyr
+# Bit 6 and 7 - Sys
+
+# !"""
 
 acc_data_x_lsb = 0x08 # Mem location where 
 gyr_data_x_lsb = 0x14 # Pg 52, gyro data
 
     
 """! Data to write to BNO055 !"""
+
+
 config_op_mode = 0b0000 # Page 21
 IMU_op_mode = 0b1000 # Page 21
 compass_mode = 0b1001 # Page 21
