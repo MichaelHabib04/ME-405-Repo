@@ -5,7 +5,24 @@ import sys
 # Add the on_board folder so modules like boot, main, etc. can be imported
 sys.path.insert(0, os.path.abspath("../Final Term Project/on_board"))
 
+# --- RTD / CPython compatibility shims --------------------------------------
+# Make MicroPython-style functions available so imports don't fail on RTD.
 
+import time as _time
+
+if not hasattr(_time, "ticks_diff"):
+    def ticks_diff(end, start):
+        """Fallback implementation of MicroPython's time.ticks_diff.
+
+        This is only used in the documentation build on ReadTheDocs.
+        """
+        return end - start
+
+    _time.ticks_diff = ticks_diff
+
+# Ensure our patched module is the one that gets imported
+import sys as _sys
+_sys.modules["time"] = _time
 
 
 # Configuration file for the Sphinx documentation builder.
@@ -36,7 +53,7 @@ autodoc_default_options = {
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-autodoc_mock_imports = ["pyb", "time"]
+autodoc_mock_imports = ["pyb"]
 
 
 # -- Options for HTML output -------------------------------------------------
