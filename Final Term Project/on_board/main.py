@@ -18,7 +18,7 @@ from ulab import numpy as np
 # import math
 from command import Command
 from micropython import const
-from math import cos, sin, acos, sqrt
+from math import cos, sin, acos, sqrt, pi
 
 """! Setup for Bluetooth Module !"""
 
@@ -163,11 +163,12 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
         theta = acos((C_x * E_x + C_y * E_y) / E_mag)
     except:
         theta = 0
-    cross = max(C_x * E_y - C_y * E_x, 0.001)
+    # cross = max(C_x * E_y - C_y * E_x, 0.001)
+    cross = C_x * E_y - C_y * E_x
     # positive sign means theta is CCW, negative is CW
     # output is the angle FROM E to C
-    sign = -1 * cross / abs(cross)
-    # print("Error", theta)
+    sign = -1 * max(cross, 0) / abs(max(cross, 0.0000001))
+    print("170 Error", theta*180/pi, C_x, E_x, C_y, E_y)
     return theta * sign, E_mag
 
 
@@ -202,9 +203,8 @@ def commander(shares):
 
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-    # _operations = [com_1, com_2, com_3, com_4, com_5, com_end]
     _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_end]
-    # _operations = [Command("yaw", 1, 200, 300, 600), com_end]
+    # _operations = [com_2, com_6, com_end]
     op_ind = 0
     t_start = 0
     t_curr = 0
@@ -284,7 +284,7 @@ def commander(shares):
             # print("State 2 in command task")
             if curr_command.mode == "lin":  # line follower mode
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
-                print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
+                # print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
             elif curr_command.mode == "pos":  # position follower mode
                 print("position control mode in command task")
                 # print(dist_from_target.get())
@@ -294,7 +294,7 @@ def commander(shares):
                 # done = 1
                 # old_dist_to_checkpoint = dist_from_target.get()
                 print("position reached")
-            elif curr_command.mode == "yaw":  # position follower mode, prioritize yaw diff
+            elif curr_command.mode == "tip":  # position follower mode, prioritize yaw diff
                 # print("position control mode in command task")
                 # print(dist_from_target.get())
                 yaw_diff = yaw_angle_share.get() - yaw_initial
@@ -312,7 +312,7 @@ def commander(shares):
                     print("bumper pressed")
             elif curr_command.mode == "fwd":
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
-                print(f"{distance_traveled_share.get() - starting_dist_traveled}, {curr_command.end_condition}")
+                # print(f"315 {distance_traveled_share.get() - starting_dist_traveled}, {curr_command.end_condition}")
             if done:
                 op_ind += 1
                 position_follow.put(0)
@@ -321,7 +321,7 @@ def commander(shares):
                 R_lin_spd.put(0)
                 L_lin_spd.put(0)
                 # _operations.pop(0)  # remove command that has completed executing
-                print(f"Operation {op_ind + 1} done, state 0")
+                print(f"Operation {op_ind} done, state 0")
                 t_start = ticks_ms()
                 state = 3
         elif state == 3:
@@ -361,10 +361,10 @@ def PositionControl(shares):
             # print("position controller running")
             yaw_err, dist_to_checkpoint = yaw_error(x_position.get(), y_position.get(), yaw_angle_share.get(),
                                                     X_target.get(), Y_target.get())
-            print(f"Dist to checkpoint: {dist_to_checkpoint}")
+            # print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * 100
+            scaled_speed_diff = control_output_diff * 125
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
             if not position_follow.get():

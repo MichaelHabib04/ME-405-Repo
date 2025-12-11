@@ -35,7 +35,8 @@ class Command():
         "pos" for position follower mode
         "bmp" for bump sensor mode
         "rev" for blind reverse mode 
-        "fwd: for forward mode
+        "fwd" for forward mode
+        "tip" for turn in place
         """
         self.end_condition = end_condition
         self.x_coord = x_coord #X coordinate. Can be ignored for modes other than 1
