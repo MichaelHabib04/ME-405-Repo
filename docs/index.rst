@@ -19,4 +19,4 @@ documentation for details.
    :caption: Contents:
 
 
-   api
+   hardware

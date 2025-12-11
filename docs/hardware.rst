@@ -29,11 +29,6 @@ On Board Code Hello Hello
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: main
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: motor_driver
    :members:
    :undoc-members:
