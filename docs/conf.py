@@ -10,19 +10,32 @@ sys.path.insert(0, os.path.abspath("../Final Term Project/on_board"))
 
 import time as _time
 
+# Fallback implementation of ticks_us (microsecond ticks)
+if not hasattr(_time, "ticks_us"):
+    # simple monotonic microsecond counter based on perf_counter
+    import time as _t
+    _start = _t.perf_counter()
+
+    def ticks_us():
+        """Rough replacement for MicroPython's time.ticks_us().
+
+        Returns:
+            int: Microseconds since an arbitrary start point.
+        """
+        return int((_t.perf_counter() - _start) * 1_000_000)
+
+    _time.ticks_us = ticks_us
+
+# Fallback implementation of ticks_diff
 if not hasattr(_time, "ticks_diff"):
     def ticks_diff(end, start):
-        """Fallback implementation of MicroPython's time.ticks_diff.
-
-        This is only used in the documentation build on ReadTheDocs.
-        """
+        """Fallback implementation of MicroPython's time.ticks_diff()."""
         return end - start
 
     _time.ticks_diff = ticks_diff
 
-# Ensure our patched module is the one that gets imported
-import sys as _sys
-_sys.modules["time"] = _time
+# Ensure our patched module is what gets imported as 'time'
+sys.modules["time"] = _time
 
 
 # Configuration file for the Sphinx documentation builder.
