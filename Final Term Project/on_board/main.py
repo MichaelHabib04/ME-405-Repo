@@ -540,8 +540,8 @@ def IMU_OP(shares):
             dist_traveled_old = x_hat_old[2]
             x_hat_old = x_hat_new
             S_diff = x_hat_new[2] - dist_traveled_old
-            global_coords[0] = global_coords[0] + S_diff * cos(-1 * y_measured[2])
-            global_coords[1] = global_coords[1] + S_diff * sin(-1 * y_measured[2])
+            global_coords[0] = global_coords[0] + S_diff * cos(-1 * y_measured[2])*1.03
+            global_coords[1] = global_coords[1] + S_diff * sin(-1 * y_measured[2])*1.05
 
             # print(f"Angle: {-1* y_measured[3]} sin value: {sin(-1* y_measured[3])} cos value: {cos(-1* y_measured[3])}" )
             # print(f"Psi: {y_measured[3]}, S: {x_hat_new[2]}")
