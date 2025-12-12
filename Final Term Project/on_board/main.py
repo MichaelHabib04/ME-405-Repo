@@ -201,7 +201,7 @@ def commander(shares):
     com_5 = Command("lin", 1250, 150)  # quickly line follow through dashed lines
     com_6 = Command("fwd", 310, 100)
     com_7 = Command("lin", 300, 150)
-    com_8 = Command("fwd", 630, 150)
+    com_8 = Command("fwd", 580, 150)
 
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
@@ -368,7 +368,7 @@ def PositionControl(shares):
             # print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * 5
+            scaled_speed_diff = control_output_diff * -5
             print("370 ", scaled_speed_diff)
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
@@ -590,7 +590,7 @@ def IMU_OP(shares):
 
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
-
+            print(f"593 x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
             state = 2
         yield state
 
