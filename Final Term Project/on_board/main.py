@@ -201,11 +201,13 @@ def commander(shares):
     com_5 = Command("lin", 1250, 150)  # quickly line follow through dashed lines
     com_6 = Command("fwd", 310, 100)
     com_7 = Command("lin", 300, 150)
+    com_8 = Command("fwd", 630, 150)
 
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_end]
-    # _operations = [com_6, com_6, com_6, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_end]
+    # _operations = [com_6, com_6, com_6, com_end]l0
+    # _operations = [com_4, com_6, com_6, com_6, com_end]
     op_ind = 0
     t_start = 0
     t_curr = 0
@@ -220,7 +222,7 @@ def commander(shares):
         if state == 0:
             if op_ind < len(_operations) and start_pathing.get():  # check if commands list is empty
                 curr_command = _operations[op_ind]
-                print(f"Current command is {op_ind}")
+                print(f"Current command is {op_ind + 1}")
                 state = 1
             else:
                 # stop moving Romi, since course is completed.
@@ -366,7 +368,7 @@ def PositionControl(shares):
             # print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * 1700
+            scaled_speed_diff = control_output_diff * 5
             print("370 ", scaled_speed_diff)
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
