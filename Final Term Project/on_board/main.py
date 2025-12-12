@@ -195,34 +195,44 @@ def commander(shares):
     # com_2 = Command("pos", 0, 200, 800, 740) # Slightly adjust past first Y
     # com_3 = Command("lin", 170, 200, 950, 600)  # Line follow until Diamond
     # com_2 = Command("pos", 10, 200, 950, 450)  # position track to CP1
-    com_2 = Command("fwd", 100, 100)  # Go past the diamond
-    com_3 = Command("lin", 480, 100, 1250, 400)  # Line follow around half circle
-    com_4 = Command("lin", 220, 200)  # quickly line follow through dashed lines
-    com_5 = Command("lin", 1250, 150)  # back to normal speed to go around track
-    com_6 = Command("fwd", 310, 100)  # Cross the zig-zag
-    com_7 = Command("lin", 300, 100)  # Line to parking garage entrance
+    com_2 = Command("fwd", 110, 100) # Go past the diamond
+    com_3 = Command("lin", 470, 100, 1250, 400)  # Line follow around half circle
+    com_4 = Command("lin", 200, 200)  # quickly line follow through dashed lines
+    com_5 = Command("lin", 1270, 150)  # back to normal speed to go around track
+    com_6 = Command("fwd", 330, 100) # Cross the zig-zag
+    com_7 = Command("lin", 300, 100) # Line to parking garage entrance
     # com_8 = Command("tip", -.007, 20) # Slightly adjust heading to align with parking garage
     # com_9 = Command("fwd", 580, 140) # Go through parking garage
     # com_10 = Command("tip", 1.45, 100) # turn 90 degrees to get out of parking garage
     # com_11 = Command("fwd", 70, 100) # Go forward to cp 5
     # com_12 = Command("lin", 300, 150) # Wall?
 
-    com_8 = Command("fwd", 570, 140)  # Go through parking garage
-    com_9 = Command("tip", 0.75, 100)  # turn 90 degrees to get out of parking garage
-    com_10 = Command("fwd", 70, 100)  # Go forward to cp 5
-    com_11 = Command("lin", 1000, 200)  # Until hits wall
+
+
+    com_8 = Command("fwd", 590, 170) # Go through parking garage
+    com_9 = Command("tip", 0.75, 100) # turn 90 degrees to get out of parking garage
+    com_10 = Command("fwd", 70, 100) # Go forward to cp 5
+    com_11 = Command("lin", 1000, 200) # Until hits wall
+    bmp_com_1 = Command("fwd", -150, -140)  # Back up
+    bmp_com_2 = Command("pos", 25, 200, 500, 400)  # turn 90 degrees to get out of parking garage
+    bmp_com_3 = Command("pos", 25, 200, 500, 800)  # turn 90 degrees to get out of parking garage
+    # bmp_com_3 = Command("fwd", 70, 100) # Go forward to cp 5
+    bmp_com_4 = Command("pos", 5, 200, 100, 800)
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, com_end]
-    # _operations = [com_6, com_6, com_6, com_end]l0
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, bmp_com_1, bmp_com_2, bmp_com_3, bmp_com_4, com_end]
+    # _operations = [com_6, com_6, com_6, com_end]s
     # _operations = [com_4, com_6, com_6, com_6, com_end]
-
+    com_turn = Command("tip", 1, 100)
+    # _operations = [com_10, com_9, com_10, com_9, com_end]
     # _operations = [Command("tip", 1.35, 100)]
+    # _operations = [Command("lin", 10, 100, x_coord=1400, y_coord=800), Command("fwd", 200, 100)]
     op_ind = 0
     bmp_ind = 0
     t_start = 0
     t_curr = 0
-    _pause_time = const(200)
+    _pause_time = const(100)
+    bmp_pressed = 0
     """
     ADD COMMAND OBJECTS TO THE LIST TO BE EXECUTED IN ORDER
     """
@@ -232,7 +242,7 @@ def commander(shares):
         gc.collect()
         if state == 0:
             if start_pathing.get():  # check if commands list is empty
-                bmp_pressed = False
+                # bmp_pressed = False
                 curr_command = _operations[op_ind]
                 print(f"Current command is {op_ind + 1}")
                 state = 1
@@ -279,8 +289,8 @@ def commander(shares):
             elif curr_command.mode == "fwd":
                 # print("curr position: ", x_position.get(), y_position.get())
                 # print(curr_command.end_condition)
-                x_target.put(x_position.get() + 1.1 * curr_command.end_condition * cos(yaw_angle_share.get()))
-                y_target.put(y_position.get() + 1.1 * curr_command.end_condition * sin(yaw_angle_share.get()))
+                x_target.put(x_position.get() + 1.1*curr_command.end_condition*cos(yaw_angle_share.get()))
+                y_target.put(y_position.get() + 1.1*curr_command.end_condition*sin(yaw_angle_share.get()))
                 starting_dist_traveled = distance_traveled_share.get()
                 # print("272 ", starting_dist_traveled)
                 # print("goal: ", x_target.get(), y_target.get())
@@ -295,14 +305,16 @@ def commander(shares):
                 if curr_command.end_condition > 0:
                     R_lin_spd.put(curr_command.lin_speed * -1)
                 else:
-                    L_lin_spd.put(curr_command.lin_speed * -1)
+                    L_lin_spd.put(curr_command.lin_speed*-1)
                 position_follow.put(1)
+
 
             # elif curr_command.mode == "rev": # blind reverse mode
             #     pass
 
             # R_lin_spd.put(curr_command.lin_speed)
             # L_lin_spd.put(curr_command.lin_speed)
+
 
             state = 2
         elif state == 2:
@@ -311,11 +323,6 @@ def commander(shares):
             # R_lin_spd.put(curr_command.lin_speed)
             # L_lin_spd.put(curr_command.lin_speed)
             # print("State 2 in command task")
-            if not bmp_pressed:
-                if not PB12.value() or not PB13.value():  # Indicates bump sensor active
-                    bmp_pressed = True
-                    state = 4
-
             if curr_command.mode == "lin":  # line follower mode
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
                 # print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
@@ -338,48 +345,30 @@ def commander(shares):
                 print(f"Yaw diff: {yaw_diff}, {done}")
                 # Will stop romi if it misses the target
             # print(f"Done: {done}")
-            elif curr_command.mode == "bmp":  # bumper mode
-                if not PB12.value() or not PB13.value():
-                    done = 1
-                    print("bumper pressed")
             elif curr_command.mode == "fwd":
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
                 # print(f"315 {distance_traveled_share.get() - starting_dist_traveled}, {curr_command.end_condition}")
+            if bmp_pressed == 1:
+                done = 1
+            if not PB12.value() or not PB13.value():  # Indicates bump sensor active
+                bmp_pressed += 1
             if done:
-                if bmp_pressed:
-                    bmp_ind += 1
-                else:
-                    op_ind += 1
+                op_ind += 1
                 position_follow.put(0)
                 line_follow.put(0)
                 wheel_diff.put(0)
-                R_lin_spd.put(0)
-                L_lin_spd.put(0)
+                R_lin_spd.put(40)
+                L_lin_spd.put(40)
                 # _operations.pop(0)  # remove command that has completed executing
                 print(f"Operation {op_ind} done, state 0")
                 t_start = ticks_ms()
+                if op_ind == len(_operations):
+                    start_pathing.put(0)
                 state = 3
         elif state == 3:
             t_curr = ticks_ms()
             if ticks_diff(t_curr, t_start) >= _pause_time:
-                if bmp_pressed:
-                    state = 4
-                else:
-                    state = 0
-
-        elif state == 4:  # Bump sensor operations
-            bmp_com_1 = Command("fwd", -300, -140)  # Back up
-            bmp_com_2 = Command("pos", 10, 200, 100, 800)  # turn 90 degrees to get out of parking garage
-            # bmp_com_3 = Command("fwd", 70, 100) # Go forward to cp 5
-            bmp_com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-            bmp_operations = [bmp_com_1, bmp_com_2, bmp_com_end]
-
-            curr_command = bmp_operations[bmp_ind]
-            print(f"Current command is {op_ind + 1}")
-            if op_ind >= 3:
-                start_pathing.put(0)
                 state = 0
-
         yield state
 
 
@@ -416,10 +405,11 @@ def PositionControl(shares):
             # print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * -5
+            scaled_speed_diff = control_output_diff * -10
             # print("370 ", scaled_speed_diff)
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
+            print("412 ", scaled_speed_diff)
             if not position_follow.get():
                 position_controller.enable_integral_error()
                 state = 0
@@ -612,8 +602,8 @@ def IMU_OP(shares):
             dist_traveled_old = x_hat_old[2]
             x_hat_old = x_hat_new
             S_diff = x_hat_new[2] - dist_traveled_old
-            global_coords[0] = global_coords[0] + S_diff * cos(-1 * y_measured[2]) * 1.03
-            global_coords[1] = global_coords[1] + S_diff * sin(-1 * y_measured[2]) * 1.05
+            global_coords[0] = global_coords[0] + S_diff * cos(-1 * y_measured[2])
+            global_coords[1] = global_coords[1] + S_diff * sin(-1 * y_measured[2])*1.005
 
             # print(f"Angle: {-1* y_measured[3]} sin value: {sin(-1* y_measured[3])} cos value: {cos(-1* y_measured[3])}" )
             # print(f"Psi: {y_measured[3]}, S: {x_hat_new[2]}")
@@ -634,7 +624,7 @@ def IMU_OP(shares):
 
             x_position.put(global_coords[0])
             y_position.put(global_coords[1])
-            # print(f"593 x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
+            print(f"593 x-coord: {global_coords[0]}, y-coord: {global_coords[1]}")
             state = 2
         yield state
 
