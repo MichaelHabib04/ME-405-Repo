@@ -1,7 +1,7 @@
 Hardware Drivers
 ================
 
-Python classes to run the motors, encoders, IR sensor, and IMU
+This page contains documentation of the Python classes used to run the motors, encoders, IR sensor, and IMU. These files are loaded onto the board, and are located in the on_board folder in the GitHub repository.
 
 
 Motor Driver
