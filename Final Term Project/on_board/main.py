@@ -168,7 +168,7 @@ def yaw_error(x_curr, y_curr, yaw_curr, x_set, y_set):  # calculates difference 
     # positive sign means theta is CCW, negative is CW
     # output is the angle FROM E to C
     sign = -1 * max(cross, 0) / abs(max(cross, 0.0000001))
-    print("170 Error", theta*180/pi, C_x, E_x, C_y, E_y)
+    # print("170 Error", theta*180/pi, C_x, E_x, C_y, E_y)
     return theta * sign, E_mag
 
 
@@ -200,20 +200,26 @@ def commander(shares):
     com_4 = Command("lin", 250, 200)  # quickly line follow through dashed lines
     com_5 = Command("lin", 1250, 150)  # back to normal speed to go around track
     com_6 = Command("fwd", 310, 100) # Cross the zig-zag
-    com_7 = Command("lin", 300, 140) # Line to parking garage entrance
-    com_8 = Command("tip", -.007, 20) # Slightly adjust heading to align with parking garage
-    com_9 = Command("fwd", 580, 140) # Go through parking garage
-    com_10 = Command("tip", 1.5, 20) # turn 90 degrees to get out of parking garage
-    com_11 = Command("fwd", 70, 100) # Go forward to cp 5
-    com_12 = Command("lin", 300, 150) # Wall?
+    com_7 = Command("lin", 300, 115) # Line to parking garage entrance
+    # com_8 = Command("tip", -.007, 20) # Slightly adjust heading to align with parking garage
+    # com_9 = Command("fwd", 580, 140) # Go through parking garage
+    # com_10 = Command("tip", 1.45, 100) # turn 90 degrees to get out of parking garage
+    # com_11 = Command("fwd", 70, 100) # Go forward to cp 5
+    # com_12 = Command("lin", 300, 150) # Wall?
 
+
+    
+    com_8 = Command("fwd", 580, 140) # Go through parking garage
+    com_9 = Command("tip", 1, 100) # turn 90 degrees to get out of parking garage
+    com_10 = Command("fwd", 70, 100) # Go forward to cp 5
+    com_11 = Command("lin", 300, 150) # Wall?
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, com_12, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, com_end]
     # _operations = [com_6, com_6, com_6, com_end]l0
     # _operations = [com_4, com_6, com_6, com_6, com_end]
     
-    # _operations = [Command("tip", 1.5, 20)]
+    # _operations = [Command("tip", 1.35, 100)]
     op_ind = 0
     t_start = 0
     t_curr = 0
@@ -276,7 +282,7 @@ def commander(shares):
                 x_target.put(x_position.get() + 1.1*curr_command.end_condition*cos(yaw_angle_share.get()))
                 y_target.put(y_position.get() + 1.1*curr_command.end_condition*sin(yaw_angle_share.get()))
                 starting_dist_traveled = distance_traveled_share.get()
-                print("272 ", starting_dist_traveled)
+                # print("272 ", starting_dist_traveled)
                 # print("goal: ", x_target.get(), y_target.get())
             
             elif curr_command.mode == "tip":  # turn in place until certain yaw reached
@@ -316,7 +322,7 @@ def commander(shares):
                 # if old_dist_to_checkpoint < dist_from_target.get():
                 # done = 1
                 # old_dist_to_checkpoint = dist_from_target.get()
-                print("position reached")
+                # print("position reached")
             elif curr_command.mode == "tip":  # position follower mode, prioritize yaw diff
                 yaw_diff = yaw_angle_share.get() - yaw_initial
                 done = curr_command.check_end_condition(yaw_diff)
@@ -386,7 +392,7 @@ def PositionControl(shares):
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
             scaled_speed_diff = control_output_diff * -5
-            print("370 ", scaled_speed_diff)
+            # print("370 ", scaled_speed_diff)
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
             if not position_follow.get():
