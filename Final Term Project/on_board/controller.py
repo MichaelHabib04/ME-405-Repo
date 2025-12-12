@@ -171,7 +171,9 @@ class CLMotorController():
         
         """
         Runs a closed-loop Proportional-Integral controller to adjust motor speed to the desired setpoint (see Control Loops page). Returns necessary motor PWM percentage
-        Args:
+        
+        Parameters
+        ----------
             new_ticks (int): Timer reading in microseconds
             new_state (int): Motor's encoder reading, in ticks
             
