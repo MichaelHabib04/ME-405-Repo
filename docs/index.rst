@@ -34,6 +34,7 @@ https://spluttflob.github.io/ME405-Support/task__share_8py.html
    :caption: Contents:
 
    CourseNavigation
+   multitasking
    hardware
    hardware_drivers
    action_drivers
