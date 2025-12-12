@@ -20,7 +20,7 @@ Encoder
    :members:
    :undoc-members:
    :show-inheritance:
-
+   :exclude-members: ticks_us, ticks_diff
 
 IMU
 ---

@@ -2,8 +2,31 @@ from pyb import Pin, Timer, ADC
 from ir_sensor import IR_sensor
 
 class sensor_array:
+    """
+    Class object for reading and interpreting data from an array of IR sensors
+    """
+    
+    
     # def __init__(self, s1: ir_sensor, s2: ir_sensor, s3: ir_sensor, s4: ir_sensor, s5: ir_sensor, s6: ir_sensor, s7: ir_sensor):
     def __init__(self, sensors: list[IR_sensor], center: int, dist_mm: float):
+        """
+        
+
+        Parameters
+        ----------
+        sensors : list[IR_sensor]
+            ir_sensor objects that make up the IR sensor array
+        center : int
+            Indicates the index of the sensor that is at the center of the sensor array
+        dist_mm : float
+            Distance between sensors in mm.
+
+        Returns
+        -------
+        None.
+
+        """
+        
         self.sensors = sensors
         self.center = center # index of central sensor
         self.dist_mm = dist_mm  # distance in milimeters between sensors
@@ -13,6 +36,14 @@ class sensor_array:
 
     # CALCULATE AVERAGE OVER ONE HUNDRED READINGS FOR EACH SENSOR.
     def calibrate_black(self):
+        """
+        Reads and averages sensor readings over 100 readings to create a calibration reference for black areas of the game board
+
+        Returns
+        -------
+        None.
+
+        """
         reads_calib = 0
         sums = [0 for sensor in self.sensors]
         for i in range(100):
@@ -23,6 +54,14 @@ class sensor_array:
             self.sensors[i].set_black(sums[i]/reads_calib)
             self.blacks[i] = sums[i]/reads_calib
     def calibrate_white(self):
+        """
+        Reads and averages sensor readings over 100 readings to create a calibration reference for white areas of the game board
+
+        Returns
+        -------
+        None.
+
+        """
         reads_calib = 0
         sums = [0 for sensor in self.sensors]
         for i in range(100):
@@ -33,10 +72,27 @@ class sensor_array:
             self.sensors[i].set_white(sums[i] / reads_calib)
             self.whites[i] = sums[i] / reads_calib
     def array_read(self):
+        """
+        Reads the values of each sensor in the array
+
+        Returns
+        -------
+        None.
+
+        """
         for i in range(len(self.sensors)):
             self.raw_reads[i] = self.sensors[i].read()
 
     def find_centroid(self):
+        """
+        Calculates the location along the sensor array of the centroid value of black vlaues
+
+        Returns
+        -------
+        centroid : float
+            Location along the sensor array of the centroid of black values, in mm. The center of the array is defined as 0, and values are saturated between -8 and 8 to account for physical constraints of the array
+
+        """
         # sum_vals = 0
         # weighted_sum = 0
         # for i in range(len(self.sensors)):
