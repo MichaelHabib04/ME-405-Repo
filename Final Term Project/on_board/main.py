@@ -199,12 +199,13 @@ def commander(shares):
     com_3 = Command("lin", 480, 100, 1250, 400)  # Line follow around half circle
     com_4 = Command("lin", 250, 200)  # quickly line follow through dashed lines
     com_5 = Command("lin", 1250, 150)  # quickly line follow through dashed lines
-    com_6 = Command("fwd", 300, 100)
+    com_6 = Command("fwd", 310, 100)
+    com_7 = Command("lin", 300, 150)
 
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_end]
-    # _operations = [com_2, com_6, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_end]
+    # _operations = [com_6, com_6, com_6, com_end]
     op_ind = 0
     t_start = 0
     t_curr = 0
@@ -265,9 +266,10 @@ def commander(shares):
             elif curr_command.mode == "fwd":
                 # print("curr position: ", x_position.get(), y_position.get())
                 # print(curr_command.end_condition)
-                x_target.put(x_position.get() + curr_command.end_condition*cos(yaw_angle_share.get()))
-                y_target.put(y_position.get() + curr_command.end_condition*sin(yaw_angle_share.get()))
+                x_target.put(x_position.get() + 1.1*curr_command.end_condition*cos(yaw_angle_share.get()))
+                y_target.put(y_position.get() + 1.1*curr_command.end_condition*sin(yaw_angle_share.get()))
                 starting_dist_traveled = distance_traveled_share.get()
+                print("272 ", starting_dist_traveled)
                 # print("goal: ", x_target.get(), y_target.get())
 
                 position_follow.put(1)
@@ -364,7 +366,8 @@ def PositionControl(shares):
             # print(f"Dist to checkpoint: {dist_to_checkpoint}")
 
             control_output_diff = position_controller.get_action(IMU_time_share.get(), yaw_err)
-            scaled_speed_diff = control_output_diff * 125
+            scaled_speed_diff = control_output_diff * 1700
+            print("370 ", scaled_speed_diff)
             dist_from_target.put(dist_to_checkpoint)  # used to check command completion in commander task
             wheel_diff.put(scaled_speed_diff)
             if not position_follow.get():
