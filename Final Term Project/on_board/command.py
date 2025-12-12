@@ -62,7 +62,10 @@ class Command():
             if state <= self.end_condition: # check that Romi is closer than the threshold
                 return 1
         else:
-            if state >= self.end_condition: # for other states, the command has been fulfilled when the threshold is passed
-                return 1
-       
+            if self.end_condition > 0:
+                if state >= self.end_condition: # for other states, the command has been fulfilled when the threshold is passed
+                    return 1
+            else:
+                if state <= self.end_condition: # for other states, the command has been fulfilled when the threshold is passed
+                    return 1
         return 0
