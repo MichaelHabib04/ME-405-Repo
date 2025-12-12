@@ -13,8 +13,8 @@ To interface with the Romi, we used a STM32L476RGT6 microcontroller embeded on a
 
 In addition to the base Romi chasis, we used an IR sensor array, inertial measurement unit (IMU), and snap-action bumper switches to sense the environment and provide feedback. A bluetooth module was also used to communicate with Romi wirelessly.
 
-Fully Assembled Romi:
-=====================
+Fully Assembled Romi
+---------------------
 
 .. image:: /_static/Romi_side_1.jpg
    :alt: Fully Assembled Romi
@@ -37,48 +37,51 @@ This image shows the locations of the bump sensors, Bluetooth module, Nucleo boa
 
 This image shows the locations of the IMU sensor and IR sensor arrays, which are located on the bottom of the Romi chassis.
 
-IR Sensor Array:
-================
+Hardware used
+--------------
+
+IR Sensor Array
+~~~~~~~~~~~~~~~
 .. image:: /_static/Pololu_IR_sensor.jpg
    :alt: Pololu IR sensor
    :width: 900px
    :align: center
 The IR sensor array used was the Pololu QTR-HD-13A Reflectance Sensor Array: 13-channel, 4mm pitch, Analog POutput
 
-IMU sensor:
-============
+IMU sensor
+~~~~~~~~~~~
 .. image:: /_static/IMU_image.jpg
    :alt: IMU sensor image
    :width: 900px
    :align: center
 The IMU sensor used is the adafruit BNO055 Absolute Orientation IMU
 
-Bumper switches:
-================
+Bumper switches
+~~~~~~~~~~~~~~~
 .. image:: /_static/Bump_sensor.jpg
    :alt: Pololu Bump sensor
    :width: 900px
    :align: center
 To interact with the wall, the Pololu Romi bump sensor modules were used, one for the left side of Romi and one for the right side. The output pins for each were soldered together, since we did not care about which particular bump sensor was activated for our purposes.
 
-Bluetooth Module:
-=================
+Bluetooth Module
+~~~~~~~~~~~~~~~~~
 .. image:: /_static/Bluetooth_module.jpg
    :alt: HC-05 Bluetooth module
    :width: 500px
    :align: center
 The HC-05 Bluetooth module was used to interact with Romi wirelessly. The module communicates with the STM board over a UART protocol.
 
-Voltage Divider Circuit:
-========================
+Voltage Divider Circuit
+~~~~~~~~~~~~~~~~~~~~~~~
 .. image:: /_static/Voltage_divider_circuit.png
    :alt: HC-05 Bluetooth module
    :width: 1000px
    :align: center
 In order to correct for battery drainage, a task was created to read the battery voltage and correct it to a setpoint. In order to accomplish this, a reading of current battery voltage was needed. We accomplished this by using a voltage divider circuit in our power connection from the Romi chasis to the Nucleo board. The schematic for this circuit is shown above; the schematic was provided by the course instructor (Charlie Refvem) on the ME405 Canvas page.
 
-MCU Pin map:
-============
+MCU Pin map
+------------
 .. image:: /_static/Pin_out_diagram.jpg
    :alt: HC-05 Bluetooth module
    :width: 700px
