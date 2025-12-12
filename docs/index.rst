@@ -25,7 +25,7 @@ Game Board Overview
 ===================
 .. image:: /_static/Game_Board.jpg
    :alt: Game board picture
-   :width: 400px
+   :width: 1000px
    :align: center
 
 The game board is a circuit that is 1x1.8 meters, with five required checkpoints that the robot must reach. The circular outline in the top left corner indicates where the robot begins the course. The game board also indicates areas where a wall is located, a structure with barriers in the lower left hand corner (the "parking garage"), and "bonus" areas where plastic cups are located. The robot is explicitly required to follow the line path until the diamond-shape before checkpoint 1, and the robot is required to interact with the wall in some manner. Challenging areas of the course include disruptions in the line (such as forks, dashes, or zig-zags), the "parking garage" area with no line to follow, and navigation around the wall back to the starting area of the course.
