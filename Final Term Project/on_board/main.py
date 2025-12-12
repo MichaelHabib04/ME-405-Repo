@@ -213,15 +213,15 @@ def commander(shares):
     com_11 = Command("lin", 400, 150)  # Wall?
     com_12 = Command("fwd", -70, -100)  # reverse
     com_13 = Command("tip", 1, 100) # turn right
-    com_14 = Command("fwd", 400, 100) # go around wall
-    com_15 = Command("tip", 2*pi - 1, 100)  # turn left
-    com_16 = Command("fwd", 200, 100)
-    com_17 = Command("tip", 2 * pi - 1, 100)  # turn left
-    com_18 = Command("fwd", 200, 100)
+    # com_14 = Command("fwd", 400, 100) # go around wall
+    # com_15 = Command("tip", 2*pi - 1, 100)  # turn left
+    # com_16 = Command("fwd", 200, 100)
+    # com_17 = Command("tip", 2 * pi - 1, 100)  # turn left
+    # com_18 = Command("fwd", 200, 100)
 
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
-    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, com_12, com_13, com_14, com_15, com_16, com_17, com_18, com_end]
+    _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, com_12, com_13]#, com_14, com_15, com_16, com_17, com_18, com_end]
     # _operations = [com_6, com_6, com_6, com_end]l0
     # _operations = [com_4, com_6, com_6, com_6, com_end]
 
@@ -362,10 +362,15 @@ def commander(shares):
                 print(f"Operation {op_ind} done, state 0")
                 t_start = ticks_ms()
                 state = 3
+        if op_ind >= len(_operations):
+            state = 4
         elif state == 3:
             t_curr = ticks_ms()
             if ticks_diff(t_curr, t_start) >= _pause_time:
                 state = 0
+        elif state == 4:
+            L_lin_spd.put(50)
+            R_lin_spd(170)
         yield state
 
 
