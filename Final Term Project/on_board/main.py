@@ -198,7 +198,7 @@ def commander(shares):
     com_2 = Command("fwd", 110, 100) # Go past the diamond
     com_3 = Command("lin", 470, 100, 1250, 400)  # Line follow around half circle
     com_4 = Command("lin", 200, 200)  # quickly line follow through dashed lines
-    com_5 = Command("lin", 1270, 150)  # back to normal speed to go around track
+    com_5 = Command("lin", 1300, 170)  # back to normal speed to go around track
     com_6 = Command("fwd", 330, 100) # Cross the zig-zag
     com_7 = Command("lin", 300, 100) # Line to parking garage entrance
     # com_8 = Command("tip", -.007, 20) # Slightly adjust heading to align with parking garage
@@ -325,7 +325,7 @@ def commander(shares):
             # print("State 2 in command task")
             if curr_command.mode == "lin":  # line follower mode
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
-                # print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
+                print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
             elif curr_command.mode == "pos":  # position follower mode
                 print("position control mode in command task")
                 # print(dist_from_target.get())
