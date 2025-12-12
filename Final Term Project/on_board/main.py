@@ -212,7 +212,7 @@ def commander(shares):
     com_8 = Command("fwd", 580, 140) # Go through parking garage
     com_9 = Command("tip", 1, 100) # turn 90 degrees to get out of parking garage
     com_10 = Command("fwd", 70, 100) # Go forward to cp 5
-    com_11 = Command("lin", 300, 150) # Wall?
+    com_11 = Command("lin", 1000, 200) # Until hits wall
     # lf circle until dashed lines
     com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
     _operations = [com_1, com_2, com_3, com_4, com_5, com_6, com_7, com_8, com_9, com_10, com_11, com_end]
@@ -221,6 +221,7 @@ def commander(shares):
     
     # _operations = [Command("tip", 1.35, 100)]
     op_ind = 0
+    bmp_ind = 0
     t_start = 0
     t_curr = 0
     _pause_time = const(200)
@@ -232,16 +233,17 @@ def commander(shares):
         # print(gc.mem_free())
         gc.collect()
         if state == 0:
-            if op_ind < len(_operations) and start_pathing.get():  # check if commands list is empty
+            if  start_pathing.get():  # check if commands list is empty
+                bmp_pressed = False
                 curr_command = _operations[op_ind]
                 print(f"Current command is {op_ind + 1}")
                 state = 1
-            else:
-                # stop moving Romi, since course is completed.
-                line_follow.put(0)
-                position_follow.put(0)
-                R_lin_spd.put(0)
-                L_lin_spd.put(0)
+            # else:
+            #     # stop moving Romi, since course is completed.
+            #     line_follow.put(0)
+            #     position_follow.put(0)
+            #     R_lin_spd.put(0)
+            #     L_lin_spd.put(0)
         elif state == 1:
             # parse command objects and set     modes for tasks
             R_lin_spd.put(curr_command.lin_speed)
@@ -297,6 +299,8 @@ def commander(shares):
                 else:
                     L_lin_spd.put(curr_command.lin_speed*-1)
                 position_follow.put(1)
+                
+            
             # elif curr_command.mode == "rev": # blind reverse mode
             #     pass
             
@@ -311,6 +315,11 @@ def commander(shares):
             # R_lin_spd.put(curr_command.lin_speed)
             # L_lin_spd.put(curr_command.lin_speed)
             # print("State 2 in command task")
+            if not bmp_pressed:
+                if not PB12.value() or not PB13.value(): # Indicates bump sensor active
+                    bmp_pressed = True
+                    state = 4
+                
             if curr_command.mode == "lin":  # line follower mode
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
                 # print(f"Dist traversed: {distance_traveled_share.get() - starting_dist_traveled}")
@@ -341,7 +350,10 @@ def commander(shares):
                 done = curr_command.check_end_condition(distance_traveled_share.get() - starting_dist_traveled)
                 # print(f"315 {distance_traveled_share.get() - starting_dist_traveled}, {curr_command.end_condition}")
             if done:
-                op_ind += 1
+                if bmp_pressed:
+                    bmp_ind += 1
+                else:
+                    op_ind += 1
                 position_follow.put(0)
                 line_follow.put(0)
                 wheel_diff.put(0)
@@ -354,7 +366,22 @@ def commander(shares):
         elif state == 3:
             t_curr = ticks_ms()
             if ticks_diff(t_curr, t_start) >= _pause_time:
-                state = 0
+                if bmp_pressed:
+                    state = 4
+                else:
+                    state = 0
+                
+        elif state == 4: # Bump sensor operations
+            bmp_com_1 = Command("fwd", -300, -140) # Back up
+            bmp_com_2 = Command("pos", 10, 200, 100, 800) # turn 90 degrees to get out of parking garage
+            # bmp_com_3 = Command("fwd", 70, 100) # Go forward to cp 5
+            bmp_com_end = Command("lin", 0, 0, 0, 0)  # Command that is the last one so that Romi stops
+            bmp_operations = [bmp_com_1, bmp_com_2, bmp_com_end]
+            
+            curr_command = bmp_operations[bmp_ind]
+            print(f"Current command is {op_ind + 1}")
+            state = 1
+            
         yield state
 
 
