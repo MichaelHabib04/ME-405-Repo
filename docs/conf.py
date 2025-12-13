@@ -97,21 +97,17 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 autodoc_mock_imports = [
+    # MicroPython / hardware-only modules
     "pyb",
     "machine",
     "micropython",
     "ulab",
+    "utime",
+
+    # Ugly one that runs code at import
     "cqueue",
-    "cotask",
-    "task_share",
-    "Encoder",
-    "motor_driver",
-    "controller",
-    "ir_sensor",
-    "sensor_array",
-    "IMU_I2C",
-    "time",
 ]
+
 
 
 

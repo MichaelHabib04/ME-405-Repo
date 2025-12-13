@@ -205,17 +205,6 @@ FSM and short blurb for each task
 commander
 ~~~~~~~~~~
 
-Task Generator Functions
--------------------------
-
-.. autofunction:: main.left_ops
-.. autofunction:: main.right_ops
-.. autofunction:: main.run_UI
-.. autofunction:: main.battery_read
-.. autofunction:: main.IR_sensor
-.. autofunction:: main.IMU_OP
-.. autofunction:: main.commander
-.. autofunction:: main.PositionControl
 
 
 

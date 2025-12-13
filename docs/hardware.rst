@@ -16,11 +16,6 @@ In addition to the base Romi chasis, we used an IR sensor array, inertial measur
 Fully Assembled Romi
 ---------------------
 
-.. image:: /_static/Romi_side_1.jpg
-   :alt: Fully Assembled Romi
-   :width: 700px
-   :align: center
-
 This is Romi fully assembled as used for the final project
 
 .. image:: /_static/Romi_side_2_schematic.drawio.png
@@ -46,7 +41,7 @@ IR Sensor Array
    :alt: Pololu IR sensor
    :width: 500px
    :align: center
-The IR sensor array used was the Pololu QTR-HD-13A Reflectance Sensor Array: 13-channel, 4mm pitch, Analog POutput
+The IR sensor array used was the Pololu QTR-HD-13A Reflectance Sensor Array: 13-channel, 4mm pitch, Analog POutput. We ended up only using the odd-numbered sensors on this array; we found that this implementation worked fine for line-following and it gave us more flexibility in our Pin selection.
 
 IMU sensor
 ~~~~~~~~~~~
