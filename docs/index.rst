@@ -38,5 +38,6 @@ https://spluttflob.github.io/ME405-Support/task__share_8py.html
    hardware
    hardware_setup
    multitasking
+   Control_Loops
    hardware_drivers
    action_drivers
