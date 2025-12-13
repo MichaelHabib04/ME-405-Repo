@@ -139,6 +139,12 @@ List of shares
 Task Diagram
 -------------
 
+.. image:: /_static/Task_Diagram.drawio.png
+   :alt: Labeled Romi assembly - top
+   :width: 700px
+   :align: center
+
+
 List of Tasks
 --------------
 .. list-table::
@@ -201,11 +207,119 @@ List of Tasks
 
 Descriptions and Finite State Machines
 --------------------------------------
+Left and Right Ops Task
+~~~~~~~~~~~~~~~~~~~~~~~
 
-FSM and short blurb for each task
+.. image:: _static/SD_R_L_ops.drawio.png
+   :alt: State diagram for Left ops and Right ops tasks
+   :align: center
+   :width: 75%
 
-commander
-~~~~~~~~~~
+The left_ops and right_ops tasks implement the low-level closed-loop wheel control.
+Each task reads its wheel encoder, computes velocity, runs a PI controller
+(CLMotorController) to track the requested linear speed, applies any speed
+difference from the line/position followers via `wheel_diff`, and writes the
+resulting PWM effort, motor voltage estimate, encoder position, velocity, and
+timing information to shared variables.
+
+
+UI Task
+~~~~~~~
+
+.. image:: _static/SD_UI.drawio.png
+   :alt: State diagram for UI task
+   :align: center
+   :width: 75%
+
+The run_UI task handles the Bluetooth UART user interface. It initializes the
+UI state, listens for incoming characters, and interprets the command `m` to
+set the `start_pathing` flag, which tells the commander task to begin running
+the pre-defined command sequence. Additional states are reserved for step
+response testing and data collection control.
+
+
+Battery Read Task
+~~~~~~~~~~~~~~~~~
+
+.. image:: _static/SD_Battery_Read.drawio.png
+   :alt: State diagram for Battery Read task
+   :align: center
+   :width: 75%
+
+The battery_read task periodically samples the battery voltage using the ADC
+(BAT_READ), converts the raw reading to actual pack voltage using the voltage
+divider ratio, and publishes it to a shared variable. It also updates each
+motor controller with the current battery level and asserts a low-battery flag
+when the voltage drops below the controller threshold.
+
+
+IR Sensor Task
+~~~~~~~~~~~~~~
+
+.. image:: _static/SD_ir_sensor.drawio.png
+   :alt: State diagram for IR sensor task
+   :align: center
+   :width: 75%
+
+The IR_sensor task manages the IR line sensor array and the line-following
+controller. It supports black and white calibration modes, and in normal
+operation it reads the sensor array, computes the line centroid, and feeds that
+error into the IRController. The controller output is scaled and written to
+`wheel_diff`, which the wheel tasks use to adjust left and right speeds for
+line following when `line_follow` is enabled.
+
+
+State Estimator Task
+~~~~~~~~~~~~~~~~~~~~
+
+.. image:: _static/SD_state_estimator.drawio.png
+   :alt: State diagram for state estimator task
+   :align: center
+   :width: 75%
+
+The IMU_OP task acts as a combined IMU calibrator and state estimator. It first
+calibrates the BNO055 IMU or loads stored calibration coefficients, then
+continuously runs a discrete-time observer that fuses motor voltages, encoder
+positions, and IMU measurements. It outputs yaw angle, yaw rate, estimated
+distance traveled, and global (x, y) position to shared variables that other
+tasks (such as PositionControl and commander) rely on.
+
+
+Commander Task
+~~~~~~~~~~~~~~
+
+.. image:: _static/SD_Commander.drawio.png
+   :alt: State diagram for Commander task
+   :align: center
+   :width: 75%
+
+The commander task sequences a list of Command objects that define the robot’s
+course navigation. For each command it configures the appropriate mode
+(line-following, position-follow, blind forward motion, turn-in-place, or
+bumper), sets speed and target shares, and then monitors progress using encoder
+distance, position error, or yaw difference until the end condition is met. It
+also enforces pause times between commands and provides a safety override using
+the bump sensors.
+
+
+Position Controller Task
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: _static/SD_Pos_Cntrl.drawio.png
+   :alt: State diagram for Position Controller task
+   :align: center
+   :width: 75%
+
+The PositionControl task implements a higher-level heading controller that
+steers the robot toward a target waypoint. When `position_follow` is enabled,
+it computes the yaw error and distance to the current (X_target, Y_target)
+using the estimated global position and IMU yaw, runs the PositionController to
+generate a steering command, and writes a scaled speed difference into
+`wheel_diff`. It also updates `dist_from_target` so the commander can detect
+when a position-based command has been completed.
+
+
+
 
 
 
