@@ -97,14 +97,22 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 autodoc_mock_imports = [
-    "utime",
-    "machine",
     "pyb",
+    "machine",
     "micropython",
-    "cqueue",
     "ulab",
-    "Encoder",   
+    "cqueue",
+    "cotask",
+    "task_share",
+    "Encoder",
+    "motor_driver",
+    "controller",
+    "ir_sensor",
+    "sensor_array",
+    "IMU_I2C",
+    "time",
 ]
+
 
 
 
