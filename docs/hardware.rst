@@ -2,12 +2,30 @@ Hardware Overview
 =================
 This project uses a Pololu Romi differential drive robot. The motors and motor encoders used are the ones that come with the Pololu chasis kit. Important specifications for the Romi are listed below:
 
-Chassis Diameter:				163 mm
-Track Width (Wheel Center to Wheel Center):	141 mm
-Wheel Radius:					35 mm
-Gear Ratio (Exact):				119.76:1
-Encoder Resolution (at Motor):			12 counts/rev
-Motor Voltage (Rated):				4.5 V
+.. list-table:: Mechanical Specifications
+   :header-rows: 1
+   :widths: 40 40
+
+   * - Specification
+     - Value
+
+   * - Chassis Diameter
+     - 163 mm
+
+   * - Track Width (Wheel Center to Wheel Center)
+     - 141 mm
+
+   * - Wheel Radius
+     - 35 mm
+
+   * - Gear Ratio (Exact)
+     - 119.76:1
+
+   * - Encoder Resolution (at Motor)
+     - 12 counts/rev
+
+   * - Motor Voltage (Rated)
+     - 4.5 V
 
 To interface with the Romi, we used a STM32L476RGT6 microcontroller embeded on a NUCLEO-L476RG board. This board was interfaced with using a Shoe of Brian board. More information about the Shoe of Brian board can be found on the ME405 Library: https://spluttflob.github.io/ME405-Support/shoe_info.html 
 
