@@ -72,4 +72,40 @@ https://me-405-repo.readthedocs.io/en/latest/index.html
 
 ## Final System Components
 
-The final robot impl
+The final robot implementation includes:
+
+### Cooperative multitasking with:
+
+- Left and right motor operation tasks
+- Line-following task
+- Position controller task
+- IMU observer/state estimator task
+- Commander task for autonomous course navigation
+- UART-based UI task
+
+### Hardware configuration:
+
+- Pololu IR sensor array
+- BNO055 IMU
+- Dual motor drivers
+- Quadrature encoders
+- Bump sensors
+- UART/Bluetooth interface
+
+## Running the Robot
+
+To run the system:
+
+1. Flash `main.py` and all documented modules inside `on_board/` onto the Pyboard.
+2. Use the `on_pc/` scripts as needed for data collection, plotting, or UART interaction.
+3. Power the robot and initiate pathing via the UI task.
+
+## Contributors
+
+Katherine Meezan  
+Michael Habib  
+Zachery Boyer  
+
+ME 405 – Cal Poly Mechanical Engineering  
+Instructor: Charles Refvem  
+Fall 2025
