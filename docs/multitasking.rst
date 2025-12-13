@@ -114,5 +114,13 @@ FSM and short blurb for each task
 commander
 ~~~~~~~~~~
 
+Task Generator Functions
+-------------------------
+.. automodule:: main
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 
 
