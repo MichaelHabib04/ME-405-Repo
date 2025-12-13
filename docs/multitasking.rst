@@ -8,7 +8,7 @@ Information is communicated between tasks using Share and Queue objects from the
 
 List of shares
 ~~~~~~~~~~~~~~
-.. list-table:: Share Variables
+.. list-table::
    :widths: 20 10 10 60
    :header-rows: 1
 

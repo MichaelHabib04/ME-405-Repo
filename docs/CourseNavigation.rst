@@ -17,35 +17,80 @@ The command class was created for navigation around the course, allowing the cou
 
 We broke the course into 13 segments:
 
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| Command  | Mode   | End Condition  | Lin Speed | Description                                   |
-+==========+========+================+===========+===============================================+
-| com_1    | lin    | 930            | 100       | Line follow from start to first fork          |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_2    | fwd    | 100            | 100       | Go past the diamond                           |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_3    | lin    | 480            | 100       | Line follow around half circle                |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_4    | lin    | 250            | 200       | Quickly line follow through dashed lines      |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_5    | lin    | 1250           | 150       | Back to normal speed to go around track       |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_6    | fwd    | 310            | 100       | Cross the zig-zag                             |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_7    | lin    | 300            | 115       | Line to parking garage entrance               |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_8    | fwd    | 580            | 140       | Go through parking garage                     |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_9    | tip    | 1              | 100       | Turn 90 degrees to exit parking garage        |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_10   | fwd    | 70             | 100       | Go forward to CP5                             |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_11   | lin    | 400            | 150       | Forward until hit the wall                    |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_12   | fwd    | -70            | -100      | Reverse after wall hit                        |
-+----------+--------+----------------+-----------+-----------------------------------------------+
-| com_13   | tip    | 1              | 100       | Turn right                                    |
-+----------+--------+----------------+-----------+-----------------------------------------------+
+.. list-table:: Command List
+   :widths: 10 10 15 10 40
+   :header-rows: 1
+
+   * - Command
+     - Mode
+     - End Condition
+     - Lin Speed
+     - Description
+   * - com_1
+     - lin
+     - 930
+     - 100
+     - Line follow from start to first fork
+   * - com_2
+     - fwd
+     - 100
+     - 100
+     - Go past the diamond
+   * - com_3
+     - lin
+     - 480
+     - 100
+     - Line follow around half circle
+   * - com_4
+     - lin
+     - 250
+     - 200
+     - Quickly line follow through dashed lines
+   * - com_5
+     - lin
+     - 1250
+     - 150
+     - Back to normal speed to go around track
+   * - com_6
+     - fwd
+     - 310
+     - 100
+     - Cross the zig-zag
+   * - com_7
+     - lin
+     - 300
+     - 115
+     - Line to parking garage entrance
+   * - com_8
+     - fwd
+     - 580
+     - 140
+     - Go through parking garage
+   * - com_9
+     - tip
+     - 1
+     - 100
+     - Turn 90 degrees to exit parking garage
+   * - com_10
+     - fwd
+     - 70
+     - 100
+     - Go forward to CP5
+   * - com_11
+     - lin
+     - 400
+     - 150
+     - Go forward until wall is hit
+   * - com_12
+     - fwd
+     - -70
+     - -100
+     - Reverse after hitting wall
+   * - com_13
+     - tip
+     - 1
+     - 100
+     - Turn right
 
 In addition, after the bump sensor was activated, we attempted to have the robot turn in a half-circle to navigate around the wall, but we were unable to get it fully implemented in the time constraints for our project.
 
