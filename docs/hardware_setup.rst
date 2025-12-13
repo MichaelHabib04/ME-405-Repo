@@ -15,7 +15,7 @@ CN7 Connections
 ~~~~~~~~~~~~~~~
 .. image:: /_static/CN7_connections.png
    :alt: IMU sensor image
-   :width: 500px
+   :width: 100px
    :align: center
 
 
@@ -23,7 +23,7 @@ CN10 Connections
 ~~~~~~~~~~~~~~~~
 .. image:: /_static/CN10_connections.png
    :alt: IMU sensor image
-   :width: 500px
+   :width: 100px
    :align: center
 
 Software Initialization of Hardware and Controller Objects
