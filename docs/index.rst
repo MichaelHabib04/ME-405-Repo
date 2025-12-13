@@ -33,11 +33,11 @@ https://spluttflob.github.io/ME405-Support/task__share_8py.html
    :maxdepth: 12
    :caption: Contents:
 
+   hardware
+   hardware_setup 
+   multitasking  
    CourseNavigation
    Navigation_tools
-   hardware
-   hardware_setup
-   multitasking
    Control_Loops
    State_Estimation
    hardware_drivers
