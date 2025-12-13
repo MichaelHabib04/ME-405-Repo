@@ -209,9 +209,11 @@ Task Generator Functions
 -------------------------
 
 .. automodule:: main
-    :members: left_ops, right_ops, run_UI, battery_read, IR_sensor, IMU_OP, commander, PositionControl
-    :undoc-members:
-    :show-inheritance:
+   :members: left_ops, right_ops, run_UI, battery_read, IR_sensor, IMU_OP, commander, PositionControl
+   :no-undoc-members:
+   :no-inherited-members:
+   :no-special-members:
+
 
 
 
