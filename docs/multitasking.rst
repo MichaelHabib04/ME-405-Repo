@@ -214,7 +214,7 @@ Left and Right Ops Task
 .. image:: _static/SD_R_L_ops.drawio.png
    :alt: State diagram for Left ops and Right ops tasks
    :align: center
-   :width: 40%
+   :width: 50%
 
 The left_ops and right_ops tasks implement the low-level closed-loop wheel control.
 Each task reads its wheel encoder, computes velocity, runs a PI controller
@@ -247,7 +247,7 @@ Battery Read Task
    :align: center
    :width: 40%
 
-The battery_read task periodically samples the battery voltage using the ADC
+The battery_read task periodically samples the battery voltage using ADC
 (BAT_READ), converts the raw reading to actual pack voltage using the voltage
 divider ratio, and publishes it to a shared variable. It also updates each
 motor controller with the current battery level and asserts a low-battery flag
