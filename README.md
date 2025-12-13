@@ -134,7 +134,19 @@ The repository contains folders for each weekly lab assignment:
 
 
 
-Full project documentation, including hardware setup, task descriptions, state diagrams, command sequencing, and A
+Full project documentation, including hardware setup, task descriptions, state diagrams, command sequencing, and API references, is hosted on Read the Docs:
+
+
+
+https://me-405-repo.readthedocs.io/en/latest/index.html
+
+
+
+\## Final System Components
+
+
+
+The final robot impl
 
 
 
