@@ -8,10 +8,100 @@ Instead of relying on solely line-following to complete the obstacle course, Rom
 
 To complete the obstacle course, it is helpful for Romi to know its own absolute position so that it can move to a desired absolute location. An observer produces an estimate of a system’s state variables by combining a model’s expected output for a known input and feedback from the measurable states. From the state-space model of Romi below, the four state variables are the left and right wheel speeds in radians per second, Romi’s yaw angle in radians, and the linear distance travelled by Romi’s center. Of these, the wheel speeds and yaw angles are directly measurable from the encoders and IMU respectively. The only state variable that can’t be directly measured using one of the existing sensors is the linear distance travelled, so our initial goal was just to accurately predict it. Beyond that, we sought to produce estimates for the other state variables of greater accuracy than the pure sensor readings.
 
-.. image:: _static/State_Space_Model.png
-   :alt: Romi State space model
-   :align: center
-   :width: 75% 
+State–Space Model
+~~~~~~~~~~~~~~~~~~
+
+The continuous–time state–space representation of the Romi robot used for
+state estimation is:
+
+.. math::
+
+    X =
+    \begin{bmatrix}
+        \dot{\Omega}_L \\
+        \dot{\Omega}_R \\
+        \dot{S} \\
+        \dot{\psi}
+    \end{bmatrix},
+    \qquad
+    U =
+    \begin{bmatrix}
+        V_L \\
+        V_R
+    \end{bmatrix},
+    \qquad
+    Y =
+    \begin{bmatrix}
+        S_L \\
+        S_R \\
+        \psi \\
+        \dot{\psi}
+    \end{bmatrix}
+
+The state dynamics are modeled as:
+
+.. math::
+
+    \dot{X}
+    =
+    A X + B U
+    =
+    \begin{bmatrix}
+        -\tfrac{1}{\tau_m} & 0 & 0 & 0 \\
+        0 & -\tfrac{1}{\tau_m} & 0 & 0 \\
+        \tfrac{r}{2} & \tfrac{r}{2} & 0 & 0 \\
+        -\tfrac{r}{w} & \tfrac{r}{w} & 0 & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        \Omega_L \\
+        \Omega_R \\
+        S \\
+        \psi
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        \tfrac{k_m}{\tau_m} & 0 \\
+        0 & \tfrac{k_m}{\tau_m} \\
+        0 & 0 \\
+        0 & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        V_L \\
+        V_R
+    \end{bmatrix}
+
+The output model combines encoder and IMU measurements:
+
+.. math::
+
+    Y =
+    C X + D U
+    =
+    \begin{bmatrix}
+        0 & 0 & 1 & 0 \\
+        0 & 0 & 1 & 0 \\
+        0 & 0 & \tfrac{1}{w/2} & \tfrac{1}{w/2} \\
+        -\tfrac{r}{w} & \tfrac{r}{w} & 0 & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        \Omega_L \\
+        \Omega_R \\
+        S \\
+        \psi
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        0 & 0 \\
+        0 & 0 \\
+        0 & 0 \\
+        0 & 0
+    \end{bmatrix}
+    \begin{bmatrix}
+        V_L \\
+        V_R
+    \end{bmatrix}
+
+
 
 Since the model’s initial conditions may be different from the true initial conditions, as measured by the sensors, the estimator must force the modeled outputs to converge to the sensor readings. This is done using feedback control with the error between the measured and modeled outputs, which is scaled by the L matrix. Initially, we created our L matrix by using MATLAB’s “place” function to find a set of gains that would cause the state-space system’s poles to be 5 times faster, which was decided arbitrarily. The original state-space system had only two poles, both of which were on the real axis, which gave an overdamped response, so our estimated output was consistently lagging the measured output in our testing. To resolve this issue, we sped up the system poles further by instead scaling them by a factor of ten. We also added a pair of underdamped poles that was closer to the origin than the real-axis poles so that the underdamped behavior would dominate the response, resulting in some overshoot and faster convergence. The script used to produce the discretized matrices, which are used in the estimation algorithm that runs in real-time on the board, can be found in the project repository.
 
@@ -98,7 +188,7 @@ Figure 2: Path of Romi tracing a circle of diameter 200 mm
    :alt: Romi line path
    :align: center
    :width: 75%
-Figure 3: Path of Romi traveling in a straight line of 600mm
+Figure 3: Path of Romi traveling in a straight line of 600mm; some drift is present
 
 Ultimately, our state estimator was useful because it allowed us to estimate the state variable s in real time, which was necessary for calculating global position. We used the distance traveled s to determine the end conditions of most of our pathing commands, and the X and Y global coordinates were used to develop our position controller.
 
