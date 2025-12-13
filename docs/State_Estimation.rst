@@ -33,7 +33,7 @@ Finally, we wanted to use our state readings to determine the position in X and 
 
 To confirm that position was being measured correctly, we commanded Romi to trace out a circle of a known diameter by setting the wheel speeds. While the circle was traced out, the global position was calculated and stored on Romi before finally being sent to a laptop over Bluetooth. Plotting these positions traced out the path we observed and the distances we expected, as can be seen in Figures 2. We also plotted our straight line test, which confirmed that Romi was traveling the expected distance, but also showed some drift off of a straight line of about 1mm per 16mm traveled. We confirmed through measurements with a yardstick that this drift is present, so the state estimator is accurate; this drift is an issue we expect to fix from more rigorous tuning of our motor controllers. These tests confirmed that our global position calculator was functional. 
  
-.. image:: _static/Romi_Circle_path.png
+.. image:: _static/Romi_circle_path.png
    :alt: Romi circle path
    :align: center
    :width: 75%
