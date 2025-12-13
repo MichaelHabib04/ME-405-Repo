@@ -144,6 +144,7 @@ Task Diagram
    :width: 700px
    :align: center
 
+Inter-task shares are shown as dashed lines
 
 List of Tasks
 --------------
@@ -229,7 +230,7 @@ UI Task
 .. image:: _static/SD_UI.drawio.png
    :alt: State diagram for UI task
    :align: center
-   :width: 75%
+   :width: 40%
 
 The run_UI task handles the Bluetooth UART user interface. It initializes the
 UI state, listens for incoming characters, and interprets the command `m` to
@@ -244,7 +245,7 @@ Battery Read Task
 .. image:: _static/SD_Battery_Read.drawio.png
    :alt: State diagram for Battery Read task
    :align: center
-   :width: 75%
+   :width: 40%
 
 The battery_read task periodically samples the battery voltage using the ADC
 (BAT_READ), converts the raw reading to actual pack voltage using the voltage
@@ -305,7 +306,7 @@ the bump sensors.
 Position Controller Task
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: _static/SD_Pos_Cntrl.drawio.png
+.. image:: _static/SD_Pos_Contrl.drawio.png
    :alt: State diagram for Position Controller task
    :align: center
    :width: 75%
