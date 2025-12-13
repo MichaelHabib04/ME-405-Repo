@@ -66,6 +66,11 @@ For course navigation, the IR sensor controller can be enabled or disabled, effe
 
 Position Controller
 --------------------
+.. image:: _static/Path_vectors.png
+   :alt: Position Controller vectors
+   :align: center
+   :width: 75% 
+
 Similarly to the line-following controller, the position controller works by calculating a desired difference between wheel speeds based on deviation from a setpoint. Ideally, the setpoint in this case would be the desired angle of heading of the robot, denoted by the variable Ψ, but due to the properties of the measurement coming from the sensor, the difference between the real and desired angle of heading is the controlled variable, and the setpoint is always zero. The IMU, which is solely responsible for producing yaw readings, reports the angle of heading as an integer between 0 and 2π, so simply subtracting angles will not always yield the correct result. Rather than solving for different cases dependent on the immediate value of Ψ, the angle between vectors, denoted Θ, is calculated from the vectors C and E.  
 
 For the vector E, the magnitude is the distance between points A and B. The vector C can be broken into components along the global X and Y axes by taking the cosine and sine respectively of the angle Ψ. This yields a unit vector in the direction of the robot’s heading. The angle Θ is equal to the inverse cosine of the dot product of vectors C and E divided by the product of their magnitudes. Based on this calculation, the magnitude of the angle Θ can be determined, but not whether its pointing from C to E or vice versa.
