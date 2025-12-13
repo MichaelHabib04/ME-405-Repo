@@ -17,7 +17,7 @@ The command class was created for navigation around the course, allowing the cou
 
 We broke the course into 13 segments:
 
-.. list-table:: Command List
+.. list-table::
    :widths: 10 10 15 10 40
    :header-rows: 1
 

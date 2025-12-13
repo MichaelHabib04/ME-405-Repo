@@ -139,12 +139,12 @@ Task Diagram
 
 List of Tasks
 --------------
-.. list-table:: Task List
+.. list-table::
    :widths: 15 20 10 10 45
    :header-rows: 1
 
    * - Task Name
-     - Description
+     - Generator Function in main.py
      - Priority
      - Period (ms)
      - Shares Used
