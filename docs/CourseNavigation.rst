@@ -94,9 +94,25 @@ We broke the course into 13 segments:
 
 In addition, after the bump sensor was activated, we attempted to have the robot turn in a half-circle to navigate around the wall, but we were unable to get it fully implemented in the time constraints for our project.
 
-Video of Course Navigation
+Reliability
+------------
+Our code consistiently and reliably got Romi to checkpoint 4 on the game board. A consitient issue was reliability in getting the heading of Romi correct when going into the parking garage segment of the course. In the parking garage, we have Romi drive forward in a straight line without line following enabled, since there is no line to follow in this course section. If Romi is not perfectly aligned while entering this segment, it will hit the barrier of the parking garage. This is what occurs in the first video trial below. We tried several methods to fix this issue, including adding a turn-in-place command after Romi reaches checkpoint 4 in order to correct the heading. However, the heading offset that needed to be corrected coming off of the line following was not very consistient; we attemtped to remedy this by having Romi drive through this line follow segment more slowly, which did help but did not completely fix the issue. We eventually abandoned the turn-in-place command before entering the parking garage since the angle offset we were attempting to correct for was within the range of noise we got from the IMU.
+
+When Romi successfully navigated the parking garage, our code consistiently got it to checkpoint 5, to the wall, and backing up from the wall. However, we were not able to make it to checkpoint 6, largely because it was difficult to test the navigation around the wall when we kept on encountering the above issue of Romi not navigating the parking garage consistiently.
+
+
+Videos of Course Navigation
 ---------------------------
 
-The robot runs successfully without the usb cord plugged in as well.
+Navigation to Checkpoint 4 During In-Class Demo:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. youtube:: https://www.youtube.com/watch?v=6ZmEpD3uC0o
+    :width: 560
+    :height: 315
 
-(embed YouTube video)
+Navigation to Wall Demo:
+~~~~~~~~~~~~~~~~~~~~~~~~
+.. youtube:: https://www.youtube.com/watch?v=AqD9DfiowdE
+    :width: 560
+    :height: 315
+
