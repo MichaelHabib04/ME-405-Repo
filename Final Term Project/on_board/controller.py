@@ -19,8 +19,6 @@ class CLMotorController():
             Desired motor speed in mm/s
         old_ticks : int
             System clock counter in microseconds
-        old_state : int
-            Not used, should remove
         Kp : float, optional
             Proportional gain constant. The default is 1.
         Ki : float, optional
@@ -29,8 +27,6 @@ class CLMotorController():
             Saturation lower limit for error accumulation. The default is -100.
         max_sat : int, optional
             Saturation upper limit for error accumulation. The default is 100.
-        t_init N/A: , optional
-            Unused, should remove
         v_nom : float, optional
             Nominal voltage of the batteries, used to correct for battery drain. The default is 9.0.
         threshold : int, optional
@@ -232,8 +228,6 @@ class IRController():
             Desired centroid setpoint for the IR sensor array.
          old_ticks : int
              System clock counter in microseconds
-         old_state : int
-             Not used, should remove
         K3 : float
             Sensitivity or scaling factor used to translate controller output to a wheel speed difference in mm/s.
         Kp : float, optional
@@ -244,8 +238,6 @@ class IRController():
             Minimum value for error saturation. The default is -4.
         max_sat : float, optional
             Maximum value for error saturation. The default is 4.
-        t_init : N/A, optional
-            unused, should remove. The default is 0.
         use_integral : int, optional
             Indicates whether integral error should be used. The default is 1.
 
@@ -397,8 +389,6 @@ class PositionController():
             Desired heading angle, in radians.
          old_ticks : int
              System clock counter in microseconds
-         old_state : int
-             Not used, should remove
         K3 : float
             Sensitivity or scaling factor used to translate controller output to a wheel speed difference in mm/s.
         Kp : float, optional
@@ -409,8 +399,6 @@ class PositionController():
             Minimum value for error saturation. The default is -30.
         max_sat : float, optional
             Maximum value for error saturation. The default is 30.
-        t_init : N/A, optional
-            unused, should remove. The default is 0.
         use_integral : int, optional
             Indicates whether integral error should be used. The default is 1.
 

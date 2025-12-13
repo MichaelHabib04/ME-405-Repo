@@ -34,11 +34,11 @@ Command End Conditions
      - Command ends when **distance to target position** ≤ end_condition threshold (mm).
 
    * - ``fwd`` (Forward Motion)
-     - Blind forward drive (no line or position control).
+     - Forward drive (no line control).
      - Command ends after traveling a specified **forward linear distance** (in mm).
 
    * - ``rev`` (Reverse Motion)
-     - Blind reverse drive.
+     - Reverse drive.
      - Command ends after traveling the specified **reverse distance** (in mm).
 
    * - ``tip`` (Turn In Place)
