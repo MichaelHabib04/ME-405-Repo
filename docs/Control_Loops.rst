@@ -66,27 +66,27 @@ Step Response Results
    :header-rows: 1
    :widths: 50 50
 
-   * - Left Motor  
-       Step Response and Steady-State
-     - Right Motor  
-       Step Response and Steady-State
+   * - Left Motor Step Response and Steady-State
+     - Right Motor Step Response and Steady-State
 
-   * - .. image:: _static/Left_motor_stepResponse.png
+   * - 
+       .. image:: _static/Left_motor_stepResponse.png
           :alt: Left motor step response
           :align: center
           :width: 100%
 
-        .. image:: _static/Left_motor_steady-statePlot.png
+       .. image:: _static/Left_motor_steady-statePlot.png
           :alt: Left motor steady-state velocity vs effort
           :align: center
           :width: 100%
 
-     - .. image:: _static/Right_motor_stepResponse.png
+     - 
+       .. image:: _static/Right_motor_stepResponse.png
           :alt: Right motor step response
           :align: center
           :width: 100%
 
-        .. image:: _static/Right_motor_steady-statePlot.png
+       .. image:: _static/Right_motor_steady-statePlot.png
           :alt: Right motor steady-state velocity vs effort
           :align: center
           :width: 100%
