@@ -40,6 +40,21 @@ if not hasattr(_time, "ticks_ms"):
         return int((_t.perf_counter() - _start_ms) * 1000)
 
     _time.ticks_ms = ticks_ms
+    
+    
+# Fallback implementation of sleep_ms (millisecond sleep)
+if not hasattr(_time, "sleep_ms"):
+    import time as _t
+
+    def sleep_ms(ms):
+        """Rough replacement for MicroPython's time.sleep_ms().
+
+        Args:
+            ms (int): Milliseconds to sleep.
+        """
+        _t.sleep(ms / 1000.0)
+
+    _time.sleep_ms = sleep_ms
 
 # Fallback implementation of ticks_diff
 if not hasattr(_time, "ticks_diff"):
