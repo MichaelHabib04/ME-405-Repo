@@ -1,8 +1,7 @@
 State Estimation
 ==================
 This page details the development of the state estimator, which was developed and tested for reliability before beginning work on the obstacle course navigation.
-Summary
-------- 
+
 Instead of relying on solely line-following to complete the obstacle course, Romi should be able to use other senses to optimally traverse to each checkpoint. Using the BNO055 inertial measurement unit allows us to know Romi’s position and base certain actions from a coordinate system of the course layout. The BNO055 uses three sensors to find angular acceleration (which reads gravitational force in the z-axis), angular velocity to track the 3D orientation of the IMU, and a compass to know its global orientation. Combining these senses will allow for Romi to always know its orientation in the course and should help smooth its trajectory through each obstacle. 
 
 To complete the obstacle course, it is helpful for Romi to know its own absolute position so that it can move to a desired absolute location. An observer produces an estimate of a system’s state variables by combining a model’s expected output for a known input and feedback from the measurable states. From the state-space model of Romi below, the four state variables are the left and right wheel speeds in radians per second, Romi’s yaw angle in radians, and the linear distance travelled by Romi’s center. Of these, the wheel speeds and yaw angles are directly measurable from the encoders and IMU respectively. The only state variable that can’t be directly measured using one of the existing sensors is the linear distance travelled, so our initial goal was just to accurately predict it. Beyond that, we sought to produce estimates for the other state variables of greater accuracy than the pure sensor readings.
@@ -19,7 +18,7 @@ Since our estimator runs at a very conservative timestep of 50 milliseconds, we 
 .. image:: _static/Task_Profiler.png
    :alt: Task profiler
    :align: center
-   :width: 75%
+   :width: 90%
 Figure 1: Task Profile
 
 To confirm that our estimate of the linear distance travelled, s, was correct, we ran trials for both straight and curved paths. For the straight path trials, we placed a piece of tape next to the center of one of Romi’s wheels before commanding Romi to travel forward at a known speed for a known amount of time. After the time had elapsed, we recorded the estimated output and the position from the encoder. Then, we measured the actual distance travelled from the piece of tape using a yardstick. We found that increasing the gains in L by moving the desired poles further from the origin tended to produce more accurate estimates. Finally, when the estimated distance was consistently closer to the measured distance than the encoder’s reported distance, we stopped changing our estimator, as some utility was demonstrated. For the curved path trials, we set the motors to run at different speeds and compared the estimator output to the average of the encoder position readings until it was closer to the expected arc length swept out by the center of the robot, which we determined using the expected circumference given the wheel speeds and the observed angle of the arc.
