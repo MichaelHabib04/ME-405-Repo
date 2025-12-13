@@ -214,7 +214,7 @@ Left and Right Ops Task
 .. image:: _static/SD_R_L_ops.drawio.png
    :alt: State diagram for Left ops and Right ops tasks
    :align: center
-   :width: 75%
+   :width: 40%
 
 The left_ops and right_ops tasks implement the low-level closed-loop wheel control.
 Each task reads its wheel encoder, computes velocity, runs a PI controller
@@ -230,7 +230,7 @@ UI Task
 .. image:: _static/SD_UI.drawio.png
    :alt: State diagram for UI task
    :align: center
-   :width: 40%
+   :width: 75%
 
 The run_UI task handles the Bluetooth UART user interface. It initializes the
 UI state, listens for incoming characters, and interprets the command `m` to
@@ -309,7 +309,7 @@ Position Controller Task
 .. image:: _static/SD_Pos_Contrl.drawio.png
    :alt: State diagram for Position Controller task
    :align: center
-   :width: 75%
+   :width: 50%
 
 The PositionControl task implements a higher-level heading controller that
 steers the robot toward a target waypoint. When `position_follow` is enabled,
