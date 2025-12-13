@@ -1,8 +1,37 @@
 Hardware Setup
 ==============
 
+Pin Connection Diagrams
+------------------------
+
+This section describes the physical wiring of the robot, including encoder pins,
+motor driver pins, IMU communication lines, IR sensor analog channels, bump sensors,
+and Bluetooth UART connections. Each pin is configured for the correct STM32 mode
+(analog, input with pull-up, alternate function, encoder interface, or PWM output).
+
+The Nucleo Board has two headers, labeled as CN7 and CN10. A full map of the locations of the utilized pins are shown below. The dynamic connection guide and schematic is included in the project GitHub Repository as an excel file.
+
+CN7 Connections
+~~~~~~~~~~~~~~~
+.. image:: /_static/CN7_connections.png
+   :alt: IMU sensor image
+   :width: 500px
+   :align: center
+
+
+CN10 Connections
+~~~~~~~~~~~~~~~~
+.. image:: /_static/CN10_connections.png
+   :alt: IMU sensor image
+   :width: 500px
+   :align: center
+
+Software Initialization of Hardware and Controller Objects
+-----------------------------------------------------------
+To run our mutlitasking script succesfully, needed objects had to be initialized. These include objects of the hardware and action drivers we wrote, as well as pyb Pin, Timer, and other objects.
+
 Bluetooth / UART Setup
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: Bluetooth and UART Objects
    :widths: 20 25 55
@@ -34,7 +63,7 @@ Bluetooth / UART Setup
 
 
 Encoders and Timer Configuration
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: Encoder Hardware and Objects
    :widths: 20 25 55
@@ -94,7 +123,7 @@ Encoders and Timer Configuration
 
 
 Motors and Closed-Loop Controllers
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: Motor Drivers and Controllers
    :widths: 20 25 55
@@ -114,15 +143,15 @@ Motors and Closed-Loop Controllers
 
    * - cl_ctrl_mot_left
      - CLMotorController
-     - Closed-loop controller for left motor (PI controller, mm/s setpoint).
+     - Closed-loop controller for left motor (PI control, mm/s setpoint).
 
    * - cl_ctrl_mot_right
      - CLMotorController
-     - Closed-loop controller for right motor (PI controller, mm/s setpoint).
+     - Closed-loop controller for right motor (PI control, mm/s setpoint).
 
 
 Battery Measurement
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: Battery Sensor Objects
    :widths: 20 25 55
@@ -142,7 +171,7 @@ Battery Measurement
 
 
 IR Sensors and Line Following
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: IR Sensor Channels and Controllers
    :widths: 20 25 55
@@ -202,7 +231,7 @@ IR Sensors and Line Following
 
 
 IMU (BNO055) Configuration and Interface
-----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: IMU Configuration and Objects
    :widths: 25 20 55
@@ -266,7 +295,7 @@ IMU (BNO055) Configuration and Interface
 
 
 Bump Sensors
-------------
+~~~~~~~~~~~~
 
 .. list-table:: Bump Sensor Pins
    :widths: 20 25 55
