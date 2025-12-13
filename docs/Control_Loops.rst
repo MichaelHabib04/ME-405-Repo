@@ -60,32 +60,33 @@ K3 Gain for Motor Controllers
 In the motor controllers, K3 scales the controller output from a speed in wheel-degrees/s (which is the unit error calculation is performed in within the control loop) to an output PWM for the motors. Since the electrical components in the left and right motors are not exactly the same due to tolerancing, we wanted to experimentally get a relationship between measured encoder speed and motor effort. To do this, we performed 10 step response tests, where we set both motors to a PWM % effort between 10 and 100 for 3 seconds and recorded the encoder speed data. We did this while Romi drove on the floor since we wanted accurate speed performance while driving. Then, we found the steady-state speeds of each motor at each effort level, and then found a best-fit line. We converted the units of this line's slope (encoder-counts/s vs PWM %) to our desired scaling factor (PWM % vs wheel-degrees/s) to find the K3 value for each motor. This value was 0.06687 for the left motor, and 0.06841 for the right motor. Due to an issue we discovered with our encoder's timer initialization, we redid these step responses while developing our state estimator; csv files and the plotting programs used to generate the plots are found in the folder "Fixed Step Responses" witihn our Final Term Project folder on the GitHub Repository.
 
 Step Response Results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table:: Step Response and Steady-State Behavior
    :header-rows: 1
    :widths: 50 50
 
-   * - Left Motor Step Response
-     - Left Motor Steady-State Velocity vs Effort
+   * - Left Motor  
+       Step Response and Steady-State
+     - Right Motor  
+       Step Response and Steady-State
 
    * - .. image:: _static/Left_motor_stepResponse.png
           :alt: Left motor step response
           :align: center
           :width: 100%
-     - .. image:: _static/Left_motor_steady-statePlot.png
+
+        .. image:: _static/Left_motor_steady-statePlot.png
           :alt: Left motor steady-state velocity vs effort
           :align: center
           :width: 100%
 
-   * - Right Motor Step Response
-     - Right Motor Steady-State Velocity vs Effort
-
-   * - .. image:: _static/Right_motor_stepResponse.png
+     - .. image:: _static/Right_motor_stepResponse.png
           :alt: Right motor step response
           :align: center
           :width: 100%
-     - .. image:: _static/Right_motor_steady-statePlot.png
+
+        .. image:: _static/Right_motor_steady-statePlot.png
           :alt: Right motor steady-state velocity vs effort
           :align: center
           :width: 100%
