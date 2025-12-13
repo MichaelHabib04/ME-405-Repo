@@ -1,5 +1,8 @@
+Hardware Setup
+==============
+
 Bluetooth / UART Setup
-======================
+----------------------
 
 .. list-table:: Bluetooth and UART Objects
    :widths: 20 25 55
@@ -30,60 +33,8 @@ Bluetooth / UART Setup
      - UART interface for Bluetooth communication (115200 baud, 8-N-1).
 
 
-Global State Variables
-======================
-
-.. list-table:: Global State Variables
-   :widths: 25 20 55
-   :header-rows: 1
-
-   * - Name
-     - Type
-     - Purpose
-
-   * - L_prev_dir
-     - int
-     - Previous left motor direction state.
-
-   * - L_prev_en
-     - int
-     - Previous left motor enable state.
-
-   * - L_prev_eff
-     - int / float
-     - Previous left motor effort command.
-
-   * - L_t_start
-     - int
-     - Timestamp used for left motor timing.
-
-   * - L_t_UI
-     - int
-     - Timestamp used by UI for left motor actions.
-
-   * - R_prev_dir
-     - int
-     - Previous right motor direction state.
-
-   * - R_prev_en
-     - int
-     - Previous right motor enable state.
-
-   * - R_prev_eff
-     - int / float
-     - Previous right motor effort command.
-
-   * - R_t_start
-     - int
-     - Timestamp used for right motor timing.
-
-   * - R_t_UI
-     - int
-     - Timestamp used by UI for right motor actions.
-
-
 Encoders and Timer Configuration
-================================
+--------------------------------
 
 .. list-table:: Encoder Hardware and Objects
    :widths: 20 25 55
@@ -143,7 +94,7 @@ Encoders and Timer Configuration
 
 
 Motors and Closed-Loop Controllers
-==================================
+----------------------------------
 
 .. list-table:: Motor Drivers and Controllers
    :widths: 20 25 55
@@ -171,7 +122,7 @@ Motors and Closed-Loop Controllers
 
 
 Battery Measurement
-===================
+-------------------
 
 .. list-table:: Battery Sensor Objects
    :widths: 20 25 55
@@ -191,7 +142,7 @@ Battery Measurement
 
 
 IR Sensors and Line Following
-=============================
+-----------------------------
 
 .. list-table:: IR Sensor Channels and Controllers
    :widths: 20 25 55
@@ -251,7 +202,7 @@ IR Sensors and Line Following
 
 
 IMU (BNO055) Configuration and Interface
-========================================
+----------------------------------------
 
 .. list-table:: IMU Configuration and Objects
    :widths: 25 20 55
@@ -315,7 +266,7 @@ IMU (BNO055) Configuration and Interface
 
 
 Bump Sensors
-============
+------------
 
 .. list-table:: Bump Sensor Pins
    :widths: 20 25 55

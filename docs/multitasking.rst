@@ -197,8 +197,8 @@ List of Tasks
      - 20
      - X_coords_share, Y_coords_share, position_follow, IMU_time_share, yaw_angle_share, wheel_diff, dist_from_target, X_target, Y_target
 
-Task Descriptions
-------------------
+Descriptions and Finite State Machines
+--------------------------------------
 
 FSM and short blurb for each task
 
@@ -207,9 +207,6 @@ commander
 
 Task Generator Functions
 -------------------------
-
-Task Generators
-===============
 
 .. autofunction:: main.left_ops
 .. autofunction:: main.right_ops
