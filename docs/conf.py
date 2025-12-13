@@ -26,6 +26,21 @@ if not hasattr(_time, "ticks_us"):
 
     _time.ticks_us = ticks_us
 
+# Fallback implementation of ticks_ms (millisecond ticks)
+if not hasattr(_time, "ticks_ms"):
+    import time as _t
+    _start_ms = _t.perf_counter()
+
+    def ticks_ms():
+        """Rough replacement for MicroPython's time.ticks_ms().
+
+        Returns:
+            int: Milliseconds since an arbitrary start point.
+        """
+        return int((_t.perf_counter() - _start_ms) * 1000)
+
+    _time.ticks_ms = ticks_ms
+
 # Fallback implementation of ticks_diff
 if not hasattr(_time, "ticks_diff"):
     def ticks_diff(end, start):
