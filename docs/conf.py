@@ -66,7 +66,7 @@ autodoc_default_options = {
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-autodoc_mock_imports = ["utime", "machine", "pyb", "micropython"]
+autodoc_mock_imports = ["utime", "machine", "pyb", "micropython", "cqueue"]
 
 
 
