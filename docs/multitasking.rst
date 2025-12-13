@@ -4,7 +4,7 @@ The code for our project runs using a priority-based cooperative multitasking st
 
 Inter-task communication
 -------------------------
-Information is communicated between tasks using Share and Queue objects from the open source taskshare.py. A Queue is made of a series of Shares. Shares are defined as a certain data type, and information of that data type is stored in the share object and can be referenced in other tasks. Below is a tabulated version of all of the shares we used. In general, we used uint16 shares for true/false flags and data that would only count in positive whole numbers (such as encoder counts). For other shares where decimal values were needed or desired, float was used.
+Information is communicated between tasks using Share and Queue objects from the open source taskshare.py. A Queue is made of a series of Shares. Shares are defined as a certain data type, and information of that data type is stored in the share object and can be referenced in other tasks. Below is a tabulated version of all of the shares we used. In general, we used uint16 shares for true/false flags and data that would only count in positive whole numbers (such as encoder counts). For other shares where decimal values were needed or desired, float was used. We used Queue objects within our data collection task, but not for inter-task communication.
 
 List of shares
 ~~~~~~~~~~~~~~
