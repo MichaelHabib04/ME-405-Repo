@@ -30,8 +30,6 @@ Proportional and Integral Gains
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We took a "trial and error" approach to finding Kp and Ki values. We started with no integral error, setting Ki to 0 and Kp to 1. We then iteratively scaled Kp, then worked to scale Ki. The final values of Kp and Ki are tabluated below.
 
-Controller Gains
-================
 
 .. list-table:: Proportional and Integral Gains
    :header-rows: 1
