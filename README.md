@@ -14,17 +14,17 @@ Over the quarter, the robot gained the ability to:
 
 
 
-\- Execute multiple concurrent tasks using cooperative multitasking  
+\- Execute multiple concurrent tasks using cooperative multitasking
 
-\- Drive with closed-loop PI motor controllers  
+\- Drive with closed-loop PI motor controllers
 
-\- Follow a line using a 7-channel IR sensor array  
+\- Follow a line using a 7-channel IR sensor array
 
-\- Estimate global position using IMU and encoder–based state estimation  
+\- Estimate global position using IMU and encoder–based state estimation
 
-\- Navigate an obstacle course autonomously using a command sequencing task  
+\- Navigate an obstacle course autonomously using a command sequencing task
 
-\- Communicate with the PC over UART for debugging, graphing, and data collection  
+\- Communicate with the PC over UART for debugging, graphing, and data collection
 
 
 
@@ -36,7 +36,7 @@ The repository includes all intermediate development versions used during each w
 
 
 
-\### `Final Term Project/`
+\### Final Term Project/
 
 
 
@@ -44,7 +44,7 @@ Contains the final versions of all code.
 
 
 
-\### `Lab 0x0\*/`
+\### Lab 0x0\*/
 
 
 
@@ -54,7 +54,7 @@ This allows you to see the evolution of the project. Lab deliverables are detail
 
 
 
-\### `on\_board/`
+\### on\_board/
 
 
 
@@ -62,41 +62,41 @@ Contains all MicroPython files that run directly on the Pyboard, including:
 
 
 
-\- `main.py` — the primary program that executes autonomous navigation  
+\- `main.py` — the primary program that executes autonomous navigation
 
-\- Task modules (motor operations, IR sensor task, IMU task, commander task, etc.)  
+\- Task modules (motor operations, IR sensor task, IMU task, commander task, etc.)
 
-\- Hardware setup code  
+\- Hardware setup code
 
-\- Intermediate test files used during development  
+\- Intermediate test files used during development
 
 
 
 \*\*Note:\*\* Only a subset of these files need to be flashed to the Pyboard.  
 
-The Read the Docs site (automodules section) lists every required module other than `main.py`, which must always be present.
+The Read the Docs site (automodules section) lists every required module except for `main.py`, which must always be present.
 
 
 
-\### `on\_pc/`
+\### on\_pc/
 
 
 
-Contains Python scripts that run on the computer rather than on the robot. These scripts are used for:
+Contains Python scripts that run on the computer rather than the robot. These scripts are used for:
 
 
 
-\- UART communication with the UI task  
+\- UART communication with the UI task
 
-\- Step response graphing  
+\- Step response graphing
 
-\- Data logging  
+\- Data logging
 
-\- Visualization tools  
+\- Visualization tools
 
 
 
-The contents of this folder evolved each week based on the required data collection or debugging tasks.
+The contents of this folder changed each week based on the required data collection or debugging tasks.
 
 
 
@@ -108,13 +108,13 @@ The repository contains folders for each weekly lab assignment:
 
 
 
-\- \*\*Lab 0x02\*\* — Cooperative multitasking foundation  
+\- \*\*Lab 0x02\*\* — Cooperative multitasking foundation
 
-\- \*\*Lab 0x03\*\* — Motor control development and PI tuning  
+\- \*\*Lab 0x03\*\* — Motor control development and PI tuning
 
-\- \*\*Lab 0x04\*\* — Line following using the IR sensor array  
+\- \*\*Lab 0x04\*\* — Line following using the IR sensor array
 
-\- \*\*Lab 0x05\*\* — IMU integration and state estimation  
+\- \*\*Lab 0x05\*\* — IMU integration and state estimation
 
 
 
@@ -122,11 +122,11 @@ The repository contains folders for each weekly lab assignment:
 
 
 
-\- MATLAB scripts for determining state estimation matrices  
+\- MATLAB scripts for determining state estimation matrices
 
-\- Step response results and motor characterization data  
+\- Step response results and motor characterization data
 
-\- Images and diagrams used in the documentation  
+\- Images and diagrams used in the documentation
 
 
 
@@ -154,17 +154,17 @@ The final robot implementation includes:
 
 
 
-\- Left and right motor operation tasks  
+\- Left and right motor operation tasks
 
-\- Line-following task  
+\- Line-following task
 
-\- Position controller task  
+\- Position controller task
 
-\- IMU observer/state estimator task  
+\- IMU observer/state estimator task
 
-\- Commander task for autonomous course navigation  
+\- Commander task for autonomous course navigation
 
-\- UART-based UI task  
+\- UART-based UI task
 
 
 
@@ -172,17 +172,17 @@ The final robot implementation includes:
 
 
 
-\- Pololu IR sensor array  
+\- Pololu IR sensor array
 
-\- BNO055 IMU  
+\- BNO055 IMU
 
-\- Dual motor drivers  
+\- Dual motor drivers
 
-\- Quadrature encoders  
+\- Quadrature encoders
 
-\- Bump sensors  
+\- Bump sensors
 
-\- UART/Bluetooth interface  
+\- UART/Bluetooth interface
 
 
 
@@ -194,11 +194,11 @@ To run the system:
 
 
 
-1\. Flash `main.py` and all documented modules inside `on\_board/` onto the Pyboard.  
+1\. Flash `main.py` and all documented modules inside `on\_board/` onto the Pyboard.
 
-2\. Use the `on\_pc/` scripts as needed for data collection, plotting, or UART interaction.  
+2\. Use the `on\_pc/` scripts as needed for data collection, plotting, or UART interaction.
 
-3\. Power the robot and initiate pathing via the UI task.  
+3\. Power the robot and initiate pathing via the UI task.
 
 
 
@@ -206,11 +206,11 @@ To run the system:
 
 
 
-\- Katherine Meezan  
+Katherine Meezan  
 
-\- Michael Habib  
+Michael Habib  
 
-\- Zachery Boyer  
+Zachery Boyer  
 
 
 
@@ -219,8 +219,6 @@ ME 405 – Cal Poly Mechanical Engineering
 Instructor: Charles Refvem  
 
 Fall 2025
-
-&nbsp;
 
 
 
