@@ -106,13 +106,19 @@ Videos of Course Navigation
 
 Navigation to Checkpoint 4 During In-Class Demo:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. youtube:: https://www.youtube.com/watch?v=6ZmEpD3uC0o
+.. youtube:: 6ZmEpD3uC0o
     :width: 560
     :height: 315
 
 Navigation to Wall Demo:
 ~~~~~~~~~~~~~~~~~~~~~~~~
-.. youtube:: https://www.youtube.com/watch?v=AqD9DfiowdE
+.. youtube:: AqD9DfiowdE
     :width: 560
     :height: 315
+
+Video Links
+~~~~~~~~~~~~
+https://www.youtube.com/watch?v=6ZmEpD3uC0o
+https://www.youtube.com/watch?v=AqD9DfiowdE
+
 
