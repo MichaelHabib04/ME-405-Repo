@@ -133,7 +133,7 @@ List of shares
    * - Y_coords_share
      - f
      - 32-bit float
-     - C
+     - Current global Y position
 
 
 Task Diagram
@@ -206,7 +206,7 @@ List of Tasks
      - 20
      - X_coords_share, Y_coords_share, position_follow, IMU_time_share, yaw_angle_share, wheel_diff, dist_from_target, X_target, Y_target
 
-Descriptions and Finite State Machines
+Task Descriptions and Finite State Machines
 --------------------------------------
 Left and Right Ops Task
 ~~~~~~~~~~~~~~~~~~~~~~~

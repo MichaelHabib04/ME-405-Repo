@@ -16,7 +16,6 @@ The different modes and end conditions used by the command task are tabulated be
 
 Command End Conditions
 ~~~~~~~~~~~~~~~~~~~~~~~
-
 .. list-table:: End Conditions by Command Mode
    :header-rows: 1
    :widths: 20 30 50

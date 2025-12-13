@@ -3,7 +3,7 @@ Control Loops Used
 This project utilizes Proportional-Integral control for adjusting motor speed, line following, and position tracking. All of these controllers use the same basic structure and are implemented as objects into the main program. These Class definitions are contained in the file controller.py.
 
 
-Control Loop Diagram
+Control Loop Design
 ----------------------
 .. image:: _static/Controller.drawio.png
    :alt: Romi State space model
